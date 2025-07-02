@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Klassia - Control de Asistencia</title>
     <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="icono-192.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/localforage/dist/localforage.min.js"></script>
@@ -498,9 +497,9 @@
                     <div class="welcome-container">
                         <h1 class="welcome-title">Bienvenido a Klassia</h1>
                         <p class="welcome-text">Sistema de control de asistencia para instituciones educativas</p>
-                        <img src="portada.png" alt="Klassia - Control de Asistencia" class="welcome-image">
+                        <img src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=2070&auto=format&fit=crop" alt="Klassia - Control de Asistencia" class="welcome-image">
                         <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                            <button class="btn btn-primary">
+                            <button class="btn btn-primary" id="startNowBtn">
                                 <i class="fas fa-play"></i> Empezar ahora
                             </button>
                             <button class="btn btn-outline">
@@ -793,7 +792,7 @@
                                 </div>
                                 <div class="card-body">
                                     <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; text-align: center;">
-                                        <img src="icono-512.png" alt="Klassia Logo" style="width: 120px; height: 120px; border-radius: 16px;">
+                                        <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop" alt="Klassia Logo" style="width: 120px; height: 120px; border-radius: 16px;">
                                         <h3>Klassia v1.0</h3>
                                         <p>Sistema de control de asistencia</p>
                                         <p>Desarrollado por tu equipo de desarrollo</p>
@@ -1512,6 +1511,31 @@
             };
         }
         
+        // Función para activar una pestaña
+        function activateTab(tabName) {
+            // Remover clase activa de todas las pestañas del menú
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remover clase activa de todos los contenidos
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Activar la pestaña del menú
+            const tabToActivate = document.querySelector(`.nav-tab[data-tab="${tabName}"]`);
+            if (tabToActivate) {
+                tabToActivate.classList.add('active');
+            }
+            
+            // Activar el contenido correspondiente
+            const contentToActivate = document.getElementById(`${tabName}Tab`);
+            if (contentToActivate) {
+                contentToActivate.classList.add('active');
+            }
+        }
+        
         // Inicialización de la aplicación
         document.addEventListener('DOMContentLoaded', async () => {
             try {
@@ -1723,28 +1747,22 @@
                     }
                 });
                 
-                // Cargar datos iniciales
-                loadGroups();
-                loadStudents();
-                
                 // Navegación por pestañas
                 document.querySelectorAll('.nav-tab').forEach(tab => {
                     tab.addEventListener('click', function() {
-                        // Remover clase activa de todas las pestañas
-                        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-                        // Agregar clase activa a la pestaña actual
-                        this.classList.add('active');
-                        
-                        // Ocultar todos los contenidos de pestañas
-                        document.querySelectorAll('.tab-content').forEach(content => {
-                            content.classList.remove('active');
-                        });
-                        
-                        // Mostrar el contenido de la pestaña seleccionada
-                        const tabId = this.getAttribute('data-tab') + 'Tab';
-                        document.getElementById(tabId).classList.add('active');
+                        const tabName = this.getAttribute('data-tab');
+                        activateTab(tabName);
                     });
                 });
+                
+                // Botón "Empezar ahora" para ir al Dashboard
+                document.getElementById('startNowBtn').addEventListener('click', () => {
+                    activateTab('dashboard');
+                });
+                
+                // Cargar datos iniciales
+                loadGroups();
+                loadStudents();
                 
             } catch (error) {
                 console.error('Error inicializando aplicación:', error);
