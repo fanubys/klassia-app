@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klassia - Control de Asistencia</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/localforage/dist/localforage.min.js"></script>
+    <script src="https://unpkg.com/parse/dist/parse.min.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .logo i {
+            font-size: 1.5rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .nav-tab.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-tab:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1rem 1.5rem;
+            background-color: var(--light);
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--dark);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #d1146a;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        /* Tables */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .table th {
+            background-color: var(--light);
+            font-weight: 600;
+        }
+
+        .table tr:hover {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Charts */
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        /* Calendar */
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+        }
+
+        .calendar-header {
+            grid-column: span 7;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .calendar-day:hover {
+            background-color: var(--light);
+        }
+
+        .calendar-day.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        /* Photo capture */
+        .photo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .camera-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+        
+        .camera-feed {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 8px;
+            border: 1px solid var(--light-gray);
+        }
+        
+        .camera-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .photo-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .student-photo {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+        }
+
+        /* Offline indicator */
+        .offline-indicator {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background-color: var(--danger);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+
+        /* Sync indicator */
+        .sync-indicator {
+            position: fixed;
+            bottom: 1rem;
+            left: 1rem;
+            background-color: var(--success);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-tabs {
+                display: none;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-user-check"></i>
+                <span>Klassia</span>
+            </div>
+            <nav class="nav-tabs">
+                <div class="nav-tab active">Dashboard</div>
+                <div class="nav-tab">Grupos</div>
+                <div class="nav-tab">Asistencias</div>
+                <div class="nav-tab">Reportes</div>
+                <div class="nav-tab">Configuración</div>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Header -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Panel de Control</h2>
+                    <div class="actions">
+                        <button class="btn btn-primary" id="newGroupBtn">
+                            <i class="fas fa-plus"></i> Nuevo Grupo
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="dashboard-grid">
+                        <!-- Statistics Card -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Resumen</h3>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: flex; justify-content: space-around; text-align: center;">
+                                    <div>
+                                        <div style="font-size: 2rem; font-weight: bold; color: var(--primary);" id="groupsCount">0</div>
+                                        <div>Grupos</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 2rem; font-weight: bold; color: var(--success);" id="studentsCount">0</div>
+                                        <div>Estudiantes</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 2rem; font-weight: bold; color: var(--warning);" id="attendanceRate">0%</div>
+                                        <div>Asistencia</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calendar Card -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Calendario</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="calendar" id="calendarContainer">
+                                    <!-- Calendar content will be generated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Groups Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Grupos</h2>
+                    <div class="actions">
+                        <button class="btn btn-outline" id="importCsvBtn">
+                            <i class="fas fa-file-import"></i> Importar CSV
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="groupSearch" placeholder="Buscar grupo o estudiante...">
+                    </div>
+                    
+                    <table class="table" id="groupsTable">
+                        <thead>
+                            <tr>
+                                <th>Grupo</th>
+                                <th>Estudiantes</th>
+                                <th>Última asistencia</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Groups will be populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Student Management -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Gestión de Estudiantes</h2>
+                    <div class="actions">
+                        <button class="btn btn-primary" id="newStudentBtn">
+                            <i class="fas fa-plus"></i> Nuevo Estudiante
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="dashboard-grid">
+                        <!-- Student List -->
+                        <div>
+                            <table class="table" id="studentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Grupo</th>
+                                        <th>Asistencia</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Students will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Student Detail -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Detalle del Estudiante</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="photo-container">
+                                    <img src="https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff" alt="Estudiante" class="student-photo" id="studentPhoto">
+                                    <div class="camera-actions">
+                                        <button class="btn btn-outline" id="takePhotoBtn">
+                                            <i class="fas fa-camera"></i> Tomar Foto
+                                        </button>
+                                        <button class="btn btn-outline" id="uploadPhotoBtn">
+                                            <i class="fas fa-upload"></i> Subir Foto
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Nombre Completo</label>
+                                    <input type="text" class="form-control" id="studentName" placeholder="Nombre del estudiante">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Grupo</label>
+                                    <select class="form-control" id="studentGroup">
+                                        <option value="">Seleccionar grupo</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Asistencia</label>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <button class="btn attendance-btn" data-status="presente" style="background-color: #4ade80; color: white;">Presente</button>
+                                        <button class="btn attendance-btn" data-status="ausente" style="background-color: #f87171; color: white;">Ausente</button>
+                                        <button class="btn attendance-btn" data-status="tardanza" style="background-color: #fbbf24; color: white;">Tardanza</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group" style="margin-top: 1.5rem;">
+                                    <button class="btn btn-primary" style="width: 100%;" id="saveStudentBtn">
+                                        <i class="fas fa-save"></i> Guardar Cambios
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Reportes y Estadísticas</h2>
+                    <div class="actions">
+                        <button class="btn btn-primary" id="exportReportBtn">
+                            <i class="fas fa-download"></i> Exportar Reporte
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="dashboard-grid">
+                        <!-- Attendance Chart -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Asistencia por Grupo</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="attendanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Student Performance -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Rendimiento de Estudiantes</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="performanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <h3 style="margin-bottom: 1rem;">Exportar datos</h3>
+                        <div style="display: flex; gap: 1rem;">
+                            <button class="btn btn-outline" id="exportExcelBtn">
+                                <i class="fas fa-file-excel"></i> Excel (.xls)
+                            </button>
+                            <button class="btn btn-outline" id="exportOdfBtn">
+                                <i class="fas fa-file-alt"></i> ODF
+                            </button>
+                            <button class="btn btn-outline" id="exportPdfBtn">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Offline Indicator -->
+        <div class="offline-indicator" id="offlineIndicator">
+            <i class="fas fa-wifi-slash"></i>
+            <span>Modo sin conexión</span>
+        </div>
+
+        <!-- Sync Indicator -->
+        <div class="sync-indicator" id="syncIndicator">
+            <i class="fas fa-sync-alt fa-spin"></i>
+            <span>Sincronizando datos...</span>
+        </div>
+        
+        <!-- Camera Modal -->
+        <div id="cameraModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center;">
+            <div style="background: white; border-radius: 8px; padding: 20px; max-width: 90%; max-height: 90%;">
+                <div class="camera-container">
+                    <video id="cameraVideo" autoplay playsinline muted style="max-width: 100%; max-height: 60vh;"></video>
+                    <canvas id="cameraCanvas" width="640" height="480" style="display: none;"></canvas>
+                    <div class="camera-actions">
+                        <button class="btn btn-primary" id="captureBtn">
+                            <i class="fas fa-camera"></i> Capturar Foto
+                        </button>
+                        <button class="btn btn-danger" id="cancelCameraBtn">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- CSV Import Modal -->
+        <div id="csvModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center;">
+            <div style="background: white; border-radius: 8px; padding: 20px; width: 90%; max-width: 500px;">
+                <h3>Importar Grupo desde CSV</h3>
+                <div class="form-group">
+                    <label class="form-label">Seleccionar archivo CSV</label>
+                    <input type="file" class="form-control" id="csvFile" accept=".csv">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nombre del Grupo</label>
+                    <input type="text" class="form-control" id="groupName" placeholder="Ingrese nombre del grupo">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button class="btn btn-primary" id="importCsvConfirmBtn">
+                        <i class="fas fa-file-import"></i> Importar
+                    </button>
+                    <button class="btn btn-danger" id="cancelCsvBtn">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Parse para Back4App usando variables de entorno
+        const PARSE_APP_ID = window.PARSE_APP_ID || 'TU_APP_ID_BACK4APP';
+        const PARSE_JS_KEY = window.PARSE_JS_KEY || 'TU_JS_KEY_BACK4APP';
+        const PARSE_SERVER_URL = 'https://parseapi.back4app.com/';
+        
+        Parse.initialize(PARSE_APP_ID, PARSE_JS_KEY);
+        Parse.serverURL = PARSE_SERVER_URL;
+        
+        // Servicios principales
+        const db = {
+            students: localforage.createInstance({ name: 'KlassiaDB', storeName: 'students' }),
+            groups: localforage.createInstance({ name: 'KlassiaDB', storeName: 'groups' }),
+            attendance: localforage.createInstance({ name: 'KlassiaDB', storeName: 'attendance' }),
+            pendingSync: localforage.createInstance({ name: 'KlassiaDB', storeName: 'pendingSync' }),
+            
+            async init() {
+                await Promise.all([
+                    this.students.ready(),
+                    this.groups.ready(),
+                    this.attendance.ready(),
+                    this.pendingSync.ready()
+                ]);
+                console.log('Base de datos inicializada');
+            },
+            
+            async addStudent(student) {
+                const id = Date.now().toString();
+                await this.students.setItem(id, {...student, id, syncStatus: 'pending'});
+                await this.addToPending('students', id);
+                return id;
+            },
+            
+            async addToPending(collection, id) {
+                const pending = await this.pendingSync.getItem('pending') || [];
+                pending.push({ collection, id });
+                await this.pendingSync.setItem('pending', pending);
+            },
+            
+            async getPendingSync() {
+                const pending = await this.pendingSync.getItem('pending') || [];
+                const data = { students: [], groups: [], attendance: [] };
+                
+                for (const item of pending) {
+                    const record = await this[item.collection].getItem(item.id);
+                    if (record) {
+                        data[item.collection].push(record);
+                    }
+                }
+                
+                return data;
+            },
+            
+            async clearPendingSync() {
+                await this.pendingSync.setItem('pending', []);
+            }
+        };
+        
+        const parseService = {
+            async syncLocalData(localData) {
+                try {
+                    // 1. Sincronizar grupos
+                    for (const group of localData.groups) {
+                        const Group = Parse.Object.extend('Group');
+                        const groupObj = new Group();
+                        
+                        await groupObj.save({
+                            name: group.name,
+                            lastSynced: new Date()
+                        });
+                    }
+                    
+                    // 2. Sincronizar estudiantes
+                    for (const student of localData.students) {
+                        const Student = Parse.Object.extend('Student');
+                        const studentObj = new Student();
+                        
+                        await studentObj.save({
+                            firstName: student.firstName,
+                            lastName: student.lastName,
+                            group: this.createPointer('Group', student.groupId),
+                            photo: student.photo ? this.createFile(student.photo) : null,
+                            lastSynced: new Date()
+                        });
+                    }
+                    
+                    // 3. Sincronizar asistencias
+                    for (const record of localData.attendance) {
+                        const Attendance = Parse.Object.extend('Attendance');
+                        const attendanceObj = new Attendance();
+                        
+                        await attendanceObj.save({
+                            student: this.createPointer('Student', record.studentId),
+                            group: this.createPointer('Group', record.groupId),
+                            date: new Date(record.date),
+                            status: record.status,
+                            syncStatus: 'completed'
+                        });
+                    }
+                    
+                    return { success: true };
+                } catch (error) {
+                    console.error('Error en sincronización:', error);
+                    return { success: false, error };
+                }
+            },
+            
+            async subscribeToRealtimeUpdates(callback) {
+                try {
+                    // 1. Suscripción a cambios en Attendance
+                    const attendanceQuery = new Parse.Query('Attendance');
+                    const attendanceSubscription = await attendanceQuery.subscribe();
+                    
+                    attendanceSubscription.on('create', (record) => {
+                        callback('attendance-created', record.toJSON());
+                    });
+                    
+                    attendanceSubscription.on('update', (record) => {
+                        callback('attendance-updated', record.toJSON());
+                    });
+                    
+                    // 2. Suscripción a cambios en Student
+                    const studentQuery = new Parse.Query('Student');
+                    const studentSubscription = await studentQuery.subscribe();
+                    
+                    studentSubscription.on('update', (record) => {
+                        callback('student-updated', record.toJSON());
+                    });
+                    
+                    return { attendanceSubscription, studentSubscription };
+                } catch (error) {
+                    console.error('Error en suscripción tiempo real:', error);
+                    return null;
+                }
+            },
+            
+            createPointer(className, objectId) {
+                const obj = Parse.Object.extend(className);
+                return obj.createWithoutData(objectId);
+            },
+            
+            createFile(base64Data) {
+                const fileData = base64Data.split(';base64,').pop();
+                const fileName = `photo_${Date.now()}.jpg`;
+                return new Parse.File(fileName, { base64: fileData });
+            },
+            
+            async updateStudentPhoto(studentId, photoBase64) {
+                try {
+                    const Student = Parse.Object.extend('Student');
+                    const student = new Student();
+                    student.id = studentId;
+                    
+                    const photoFile = this.createFile(photoBase64);
+                    student.set('photo', photoFile);
+                    
+                    await student.save();
+                    return true;
+                } catch (error) {
+                    console.error('Error actualizando foto:', error);
+                    return false;
+                }
+            }
+        };
+        
+        const syncService = {
+            async checkConnectionAndSync() {
+                if (navigator.onLine) {
+                    const pendingData = await db.getPendingSync();
+                    const totalPending = pendingData.students.length + 
+                                        pendingData.groups.length + 
+                                        pendingData.attendance.length;
+                    
+                    if (totalPending > 0) {
+                        document.getElementById('syncIndicator').style.display = 'flex';
+                        
+                        try {
+                            const result = await parseService.syncLocalData(pendingData);
+                            
+                            if (result.success) {
+                                await db.clearPendingSync();
+                                console.log('Datos sincronizados exitosamente');
+                                // Actualizar UI después de sincronización
+                                loadGroups();
+                                loadStudents();
+                            }
+                        } catch (error) {
+                            console.error('Error en sincronización:', error);
+                        } finally {
+                            setTimeout(() => {
+                                document.getElementById('syncIndicator').style.display = 'none';
+                            }, 3000);
+                        }
+                    }
+                }
+            },
+            
+            initAutoSync() {
+                // Sincronizar al detectar conexión
+                window.addEventListener('online', () => this.checkConnectionAndSync());
+                
+                // Sincronizar cada 5 minutos
+                setInterval(() => this.checkConnectionAndSync(), 300000);
+                
+                // Sincronizar al iniciar la app
+                this.checkConnectionAndSync();
+            },
+            
+            initRealtimeUpdates() {
+                parseService.subscribeToRealtimeUpdates((event, data) => {
+                    console.log(`Evento en tiempo real: ${event}`, data);
+                    switch(event) {
+                        case 'attendance-created':
+                        case 'attendance-updated':
+                            this.updateAttendanceRecord(data);
+                            break;
+                        case 'student-updated':
+                            this.updateStudentRecord(data);
+                            break;
+                    }
+                });
+            },
+            
+            updateAttendanceRecord(record) {
+                // Actualizar en base de datos local
+                db.attendance.setItem(record.objectId, record);
+                
+                // Actualizar UI si es necesario
+                if (document.getElementById('attendanceRate')) {
+                    // Actualizar estadísticas
+                }
+            },
+            
+            updateStudentRecord(student) {
+                // Actualizar en base de datos local
+                db.students.setItem(student.objectId, student);
+                
+                // Actualizar UI si el estudiante está siendo editado
+                if (photoService.currentStudentId === student.objectId) {
+                    document.getElementById('studentPhoto').src = student.photo || 'https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff';
+                }
+            }
+        };
+        
+        const photoService = {
+            videoElement: null,
+            canvasElement: null,
+            stream: null,
+            currentStudentId: null,
+            
+            async init() {
+                this.videoElement = document.getElementById('cameraVideo');
+                this.canvasElement = document.getElementById('cameraCanvas');
+                this.cameraModal = document.getElementById('cameraModal');
+                
+                document.getElementById('takePhotoBtn').addEventListener('click', () => this.startCamera());
+                document.getElementById('uploadPhotoBtn').addEventListener('click', () => this.uploadPhoto());
+                document.getElementById('captureBtn').addEventListener('click', () => this.capturePhoto());
+                document.getElementById('cancelCameraBtn').addEventListener('click', () => this.stopCamera());
+            },
+            
+            async startCamera(studentId = null) {
+                if (studentId) this.currentStudentId = studentId;
+                
+                try {
+                    this.stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'user' } 
+                    });
+                    
+                    this.cameraModal.style.display = 'flex';
+                    this.videoElement.srcObject = this.stream;
+                } catch (err) {
+                    console.error('Error al acceder a la cámara:', err);
+                    alert('No se pudo acceder a la cámara. Por favor, verifica los permisos.');
+                }
+            },
+            
+            capturePhoto() {
+                const context = this.canvasElement.getContext('2d');
+                context.drawImage(this.videoElement, 0, 0, 640, 480);
+                const dataUrl = this.canvasElement.toDataURL('image/jpeg');
+                
+                // Actualizar foto en UI
+                document.getElementById('studentPhoto').src = dataUrl;
+                
+                // Guardar en base de datos local
+                if (this.currentStudentId) {
+                    db.students.getItem(this.currentStudentId).then(student => {
+                        if (student) {
+                            student.photo = dataUrl;
+                            student.syncStatus = 'pending';
+                            db.students.setItem(this.currentStudentId, student);
+                            db.addToPending('students', this.currentStudentId);
+                        }
+                    });
+                }
+                
+                // Detener la cámara
+                this.stopCamera();
+            },
+            
+            stopCamera() {
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                    this.stream = null;
+                }
+                this.cameraModal.style.display = 'none';
+            },
+            
+            uploadPhoto() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    const reader = new FileReader();
+                    reader.onload = event => {
+                        document.getElementById('studentPhoto').src = event.target.result;
+                        
+                        // Guardar en base de datos local
+                        if (this.currentStudentId) {
+                            db.students.getItem(this.currentStudentId).then(student => {
+                                if (student) {
+                                    student.photo = event.target.result;
+                                    student.syncStatus = 'pending';
+                                    db.students.setItem(this.currentStudentId, student);
+                                    db.addToPending('students', this.currentStudentId);
+                                }
+                            });
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                };
+                
+                input.click();
+            }
+        };
+        
+        // Funciones de UI
+        async function loadGroups() {
+            const groups = [];
+            await db.groups.iterate((value, key) => {
+                groups.push(value);
+            });
+            
+            // Actualizar UI
+            const groupsTable = document.querySelector('#groupsTable tbody');
+            groupsTable.innerHTML = '';
+            
+            groups.forEach(group => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${group.name}</td>
+                    <td>${group.studentCount || 0} estudiantes</td>
+                    <td>${group.lastAttendance || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-outline edit-group" data-id="${group.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline stats-group" data-id="${group.id}">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </td>
+                `;
+                groupsTable.appendChild(row);
+            });
+            
+            document.getElementById('groupsCount').textContent = groups.length;
+            
+            // Actualizar selector de grupos
+            const groupSelect = document.getElementById('studentGroup');
+            groupSelect.innerHTML = '<option value="">Seleccionar grupo</option>';
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group.id;
+                option.textContent = group.name;
+                groupSelect.appendChild(option);
+            });
+        }
+        
+        async function loadStudents() {
+            const students = [];
+            await db.students.iterate((value, key) => {
+                students.push(value);
+            });
+            
+            // Actualizar UI
+            const studentsTable = document.querySelector('#studentsTable tbody');
+            studentsTable.innerHTML = '';
+            
+            students.forEach(student => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${student.firstName} ${student.lastName}</td>
+                    <td>${student.groupName || 'Sin grupo'}</td>
+                    <td>${student.attendanceRate || '0%'}</td>
+                    <td>
+                        <button class="btn btn-outline edit-student" data-id="${student.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                `;
+                studentsTable.appendChild(row);
+            });
+            
+            document.getElementById('studentsCount').textContent = students.length;
+            
+            // Agregar event listeners para editar estudiantes
+            document.querySelectorAll('#studentsTable .edit-student').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const studentId = btn.dataset.id;
+                    db.students.getItem(studentId).then(student => {
+                        if (student) {
+                            document.getElementById('studentName').value = `${student.firstName} ${student.lastName}`;
+                            document.getElementById('studentPhoto').src = student.photo || 'https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff';
+                            photoService.currentStudentId = studentId;
+                            
+                            // Seleccionar grupo
+                            const groupSelect = document.getElementById('studentGroup');
+                            for (let i = 0; i < groupSelect.options.length; i++) {
+                                if (groupSelect.options[i].value === student.groupId) {
+                                    groupSelect.selectedIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+        }
+        
+        function generateCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDay = new Date(year, month, 1).getDay();
+            
+            const calendarContainer = document.getElementById('calendarContainer');
+            calendarContainer.innerHTML = '';
+            
+            // Crear encabezado del calendario
+            const header = document.createElement('div');
+            header.className = 'calendar-header';
+            header.textContent = now.toLocaleString('es', { month: 'long', year: 'numeric' });
+            calendarContainer.appendChild(header);
+            
+            // Días de la semana
+            const daysOfWeek = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            daysOfWeek.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'calendar-day-header';
+                dayHeader.textContent = day;
+                calendarContainer.appendChild(dayHeader);
+            });
+            
+            // Días vacíos al inicio
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day';
+                calendarContainer.appendChild(emptyDay);
+            }
+            
+            // Días del mes
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = day;
+                
+                if (day === now.getDate()) {
+                    dayElement.classList.add('active');
+                }
+                
+                calendarContainer.appendChild(dayElement);
+            }
+        }
+        
+        // Inicialización de la aplicación
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Inicializar bases de datos
+                await db.init();
+                
+                // Inicializar servicios
+                syncService.initAutoSync();
+                syncService.initRealtimeUpdates();
+                photoService.init();
+                
+                // Manejar estado offline/online
+                const offlineIndicator = document.getElementById('offlineIndicator');
+                const syncIndicator = document.getElementById('syncIndicator');
+                
+                const updateNetworkStatus = () => {
+                    offlineIndicator.style.display = navigator.onLine ? 'none' : 'flex';
+                };
+                
+                updateNetworkStatus();
+                window.addEventListener('offline', updateNetworkStatus);
+                window.addEventListener('online', updateNetworkStatus);
+                
+                // Generar calendario
+                generateCalendar();
+                
+                // Manejar CSV import
+                document.getElementById('importCsvBtn').addEventListener('click', () => {
+                    document.getElementById('csvModal').style.display = 'flex';
+                });
+                
+                document.getElementById('cancelCsvBtn').addEventListener('click', () => {
+                    document.getElementById('csvModal').style.display = 'none';
+                });
+                
+                document.getElementById('importCsvConfirmBtn').addEventListener('click', async () => {
+                    const fileInput = document.getElementById('csvFile');
+                    const groupNameInput = document.getElementById('groupName');
+                    
+                    if (!fileInput.files.length || !groupNameInput.value) {
+                        alert('Por favor, seleccione un archivo CSV e ingrese un nombre para el grupo');
+                        return;
+                    }
+                    
+                    const file = fileInput.files[0];
+                    const groupName = groupNameInput.value;
+                    
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const csvData = e.target.result;
+                        const lines = csvData.split('\n');
+                        
+                        // Crear grupo en la base de datos
+                        const groupId = Date.now().toString();
+                        await db.groups.setItem(groupId, {
+                            id: groupId,
+                            name: groupName,
+                            syncStatus: 'pending'
+                        });
+                        await db.addToPending('groups', groupId);
+                        
+                        // Procesar estudiantes
+                        for (let i = 1; i < lines.length; i++) {
+                            const [firstName, lastName] = lines[i].split(',');
+                            if (firstName && lastName) {
+                                const studentId = Date.now().toString() + i;
+                                await db.students.setItem(studentId, {
+                                    id: studentId,
+                                    firstName: firstName.trim(),
+                                    lastName: lastName.trim(),
+                                    groupId: groupId,
+                                    syncStatus: 'pending'
+                                });
+                                await db.addToPending('students', studentId);
+                            }
+                        }
+                        
+                        alert('Grupo importado correctamente. Los datos se sincronizarán cuando haya conexión.');
+                        document.getElementById('csvModal').style.display = 'none';
+                        
+                        // Recargar datos
+                        loadGroups();
+                        loadStudents();
+                    };
+                    
+                    reader.readAsText(file);
+                });
+                
+                // Registrar nuevo estudiante
+                document.getElementById('saveStudentBtn').addEventListener('click', async () => {
+                    const studentName = document.getElementById('studentName').value;
+                    const studentGroup = document.getElementById('studentGroup').value;
+                    
+                    if (!studentName || !studentGroup) {
+                        alert('Por favor, complete todos los campos');
+                        return;
+                    }
+                    
+                    const [firstName, lastName] = studentName.split(' ');
+                    
+                    if (photoService.currentStudentId) {
+                        // Actualizar estudiante existente
+                        const student = await db.students.getItem(photoService.currentStudentId);
+                        if (student) {
+                            student.firstName = firstName;
+                            student.lastName = lastName || '';
+                            student.groupId = studentGroup;
+                            await db.students.setItem(photoService.currentStudentId, student);
+                            await db.addToPending('students', photoService.currentStudentId);
+                        }
+                    } else {
+                        // Crear nuevo estudiante
+                        const studentId = await db.addStudent({
+                            firstName,
+                            lastName: lastName || '',
+                            groupId: studentGroup,
+                            photo: document.getElementById('studentPhoto').src
+                        });
+                        photoService.currentStudentId = studentId;
+                    }
+                    
+                    alert('Estudiante guardado correctamente');
+                    loadStudents();
+                });
+                
+                // Registrar asistencia
+                document.querySelectorAll('.attendance-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const status = btn.dataset.status;
+                        const studentId = photoService.currentStudentId;
+                        
+                        if (!studentId) {
+                            alert('Por favor, seleccione un estudiante primero');
+                            return;
+                        }
+                        
+                        const attendanceId = Date.now().toString();
+                        await db.attendance.setItem(attendanceId, {
+                            id: attendanceId,
+                            studentId,
+                            date: new Date().toISOString(),
+                            status,
+                            syncStatus: 'pending'
+                        });
+                        await db.addToPending('attendance', attendanceId);
+                        
+                        alert(`Asistencia registrada: ${status}`);
+                    });
+                });
+                
+                // Cargar datos iniciales
+                loadGroups();
+                loadStudents();
+                
+            } catch (error) {
+                console.error('Error inicializando aplicación:', error);
+                alert('Error al iniciar la aplicación. Por favor recarga la página.');
+            }
+        });
+
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    const CACHE_NAME = 'klassia-cache-v1';
+                    const urlsToCache = [
+                        '/',
+                        '/index.html',
+                        '/manifest.json'
+                    ];
+
+                    self.addEventListener('install', event => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then(cache => cache.addAll(urlsToCache))
+                        );
+                    });
+
+                    self.addEventListener('fetch', event => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then(response => response || fetch(event.request))
+                        );
+                    });
+
+                    self.addEventListener('sync', event => {
+                        if (event.tag === 'sync-data') {
+                            event.waitUntil(syncAttendanceData());
+                        }
+                    });
+
+                    async function syncAttendanceData() {
+                        // Simular sincronización
+                        return new Promise(resolve => {
+                            setTimeout(() => {
+                                console.log('Datos sincronizados desde Service Worker');
+                                resolve();
+                            }, 2000);
+                        });
+                    }
+                `;
+
+                // Crear un Blob con el código del service worker
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+
+                // Registrar el service worker
+                navigator.serviceWorker.register(swUrl)
+                    .then(registration => {
+                        console.log('Service Worker registrado con éxito:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('Error al registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

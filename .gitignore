@@ -1,0 +1,9 @@
+# Ignorar node_modules
+node_modules/
+
+# Ignorar archivos de entorno
+.env
+.env.local
+
+# Ignorar archivos del sistema
+.DS_Store
