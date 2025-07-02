@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Klassia - Control de Asistencia</title>
     <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="icono-192.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/localforage/dist/localforage.min.js"></script>
@@ -409,6 +410,44 @@
             margin-top: 1.5rem;
         }
         
+        /* Tab content */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Welcome Section */
+        .welcome-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .welcome-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+            box-shadow: var(--shadow);
+        }
+        
+        .welcome-title {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .welcome-text {
+            color: var(--gray);
+            max-width: 600px;
+            margin-bottom: 1.5rem;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .nav-tabs {
@@ -426,6 +465,10 @@
             .confirmation-box {
                 padding: 1.5rem;
             }
+            
+            .welcome-title {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -438,59 +481,79 @@
                 <span>Klassia</span>
             </div>
             <nav class="nav-tabs">
-                <div class="nav-tab active">Dashboard</div>
-                <div class="nav-tab">Grupos</div>
-                <div class="nav-tab">Asistencias</div>
-                <div class="nav-tab">Reportes</div>
-                <div class="nav-tab">Configuración</div>
+                <div class="nav-tab active" data-tab="dashboard">Dashboard</div>
+                <div class="nav-tab" data-tab="groups">Grupos</div>
+                <div class="nav-tab" data-tab="attendance">Asistencias</div>
+                <div class="nav-tab" data-tab="reports">Reportes</div>
+                <div class="nav-tab" data-tab="settings">Configuración</div>
             </nav>
         </header>
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Dashboard Header -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Panel de Control</h2>
-                    <div class="actions">
-                        <button class="btn btn-primary" id="newGroupBtn">
-                            <i class="fas fa-plus"></i> Nuevo Grupo
-                        </button>
+            <!-- Dashboard Tab -->
+            <div id="dashboardTab" class="tab-content active">
+                <!-- Welcome Section -->
+                <div class="card">
+                    <div class="welcome-container">
+                        <h1 class="welcome-title">Bienvenido a Klassia</h1>
+                        <p class="welcome-text">Sistema de control de asistencia para instituciones educativas</p>
+                        <img src="portada.png" alt="Klassia - Control de Asistencia" class="welcome-image">
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <button class="btn btn-primary">
+                                <i class="fas fa-play"></i> Empezar ahora
+                            </button>
+                            <button class="btn btn-outline">
+                                <i class="fas fa-book"></i> Ver tutorial
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="dashboard-grid">
-                        <!-- Statistics Card -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Resumen</h3>
-                            </div>
-                            <div class="card-body">
-                                <div style="display: flex; justify-content: space-around; text-align: center;">
-                                    <div>
-                                        <div style="font-size: 2rem; font-weight: bold; color: var(--primary);" id="groupsCount">0</div>
-                                        <div>Grupos</div>
-                                    </div>
-                                    <div>
-                                        <div style="font-size: 2rem; font-weight: bold; color: var(--success);" id="studentsCount">0</div>
-                                        <div>Estudiantes</div>
-                                    </div>
-                                    <div>
-                                        <div style="font-size: 2rem; font-weight: bold; color: var(--warning);" id="attendanceRate">0%</div>
-                                        <div>Asistencia</div>
+
+                <!-- Dashboard Header -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Panel de Control</h2>
+                        <div class="actions">
+                            <button class="btn btn-primary" id="newGroupBtn">
+                                <i class="fas fa-plus"></i> Nuevo Grupo
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="dashboard-grid">
+                            <!-- Statistics Card -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Resumen</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div style="display: flex; justify-content: space-around; text-align: center;">
+                                        <div>
+                                            <div style="font-size: 2rem; font-weight: bold; color: var(--primary);" id="groupsCount">0</div>
+                                            <div>Grupos</div>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 2rem; font-weight: bold; color: var(--success);" id="studentsCount">0</div>
+                                            <div>Estudiantes</div>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 2rem; font-weight: bold; color: var(--warning);" id="attendanceRate">0%</div>
+                                            <div>Asistencia</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Calendar Card -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Calendario</h3>
-                            </div>
-                            <div class="card-body">
-                                <div class="calendar" id="calendarContainer">
-                                    <!-- Calendar content will be generated dynamically -->
+                            <!-- Calendar Card -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Calendario</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="calendar" id="calendarContainer">
+                                        <!-- Calendar content will be generated dynamically -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -498,109 +561,115 @@
                 </div>
             </div>
 
-            <!-- Groups Section -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Grupos</h2>
-                    <div class="actions">
-                        <button class="btn btn-outline" id="importCsvBtn">
-                            <i class="fas fa-file-import"></i> Importar CSV/Excel
-                        </button>
+            <!-- Groups Tab -->
+            <div id="groupsTab" class="tab-content">
+                <!-- Groups Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Grupos</h2>
+                        <div class="actions">
+                            <button class="btn btn-outline" id="importCsvBtn">
+                                <i class="fas fa-file-import"></i> Importar CSV/Excel
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <input type="text" class="form-control" id="groupSearch" placeholder="Buscar grupo o estudiante...">
-                    </div>
-                    
-                    <table class="table" id="groupsTable">
-                        <thead>
-                            <tr>
-                                <th>Grupo</th>
-                                <th>Estudiantes</th>
-                                <th>Última asistencia</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Groups will be populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Student Management -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Gestión de Estudiantes</h2>
-                    <div class="actions">
-                        <button class="btn btn-primary" id="newStudentBtn">
-                            <i class="fas fa-plus"></i> Nuevo Estudiante
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="dashboard-grid">
-                        <!-- Student List -->
-                        <div>
-                            <table class="table" id="studentsTable">
-                                <thead>
-                                    <tr>
-                                        <th>Nombre</th>
-                                        <th>Grupo</th>
-                                        <th>Asistencia</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Students will be populated dynamically -->
-                                </tbody>
-                            </table>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="groupSearch" placeholder="Buscar grupo o estudiante...">
                         </div>
                         
-                        <!-- Student Detail -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Detalle del Estudiante</h3>
+                        <table class="table" id="groupsTable">
+                            <thead>
+                                <tr>
+                                    <th>Grupo</th>
+                                    <th>Estudiantes</th>
+                                    <th>Última asistencia</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Groups will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Tab -->
+            <div id="attendanceTab" class="tab-content">
+                <!-- Student Management -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Gestión de Estudiantes</h2>
+                        <div class="actions">
+                            <button class="btn btn-primary" id="newStudentBtn">
+                                <i class="fas fa-plus"></i> Nuevo Estudiante
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="dashboard-grid">
+                            <!-- Student List -->
+                            <div>
+                                <table class="table" id="studentsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Grupo</th>
+                                            <th>Asistencia</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Students will be populated dynamically -->
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="card-body">
-                                <div class="photo-container">
-                                    <img src="https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff" alt="Estudiante" class="student-photo" id="studentPhoto">
-                                    <div class="camera-actions">
-                                        <button class="btn btn-outline" id="takePhotoBtn">
-                                            <i class="fas fa-camera"></i> Tomar Foto
-                                        </button>
-                                        <button class="btn btn-outline" id="uploadPhotoBtn">
-                                            <i class="fas fa-upload"></i> Subir Foto
+                            
+                            <!-- Student Detail -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Detalle del Estudiante</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="photo-container">
+                                        <img src="https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff" alt="Estudiante" class="student-photo" id="studentPhoto">
+                                        <div class="camera-actions">
+                                            <button class="btn btn-outline" id="takePhotoBtn">
+                                                <i class="fas fa-camera"></i> Tomar Foto
+                                            </button>
+                                            <button class="btn btn-outline" id="uploadPhotoBtn">
+                                                <i class="fas fa-upload"></i> Subir Foto
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Nombre Completo</label>
+                                        <input type="text" class="form-control" id="studentName" placeholder="Nombre del estudiante">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Grupo</label>
+                                        <select class="form-control" id="studentGroup">
+                                            <option value="">Seleccionar grupo</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Asistencia</label>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <button class="btn attendance-btn" data-status="presente" style="background-color: #4ade80; color: white;">Presente</button>
+                                            <button class="btn attendance-btn" data-status="ausente" style="background-color: #f87171; color: white;">Ausente</button>
+                                            <button class="btn attendance-btn" data-status="tardanza" style="background-color: #fbbf24; color: white;">Tardanza</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group" style="margin-top: 1.5rem;">
+                                        <button class="btn btn-primary" style="width: 100%;" id="saveStudentBtn">
+                                            <i class="fas fa-save"></i> Guardar Cambios
                                         </button>
                                     </div>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Nombre Completo</label>
-                                    <input type="text" class="form-control" id="studentName" placeholder="Nombre del estudiante">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Grupo</label>
-                                    <select class="form-control" id="studentGroup">
-                                        <option value="">Seleccionar grupo</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Asistencia</label>
-                                    <div style="display: flex; gap: 0.5rem;">
-                                        <button class="btn attendance-btn" data-status="presente" style="background-color: #4ade80; color: white;">Presente</button>
-                                        <button class="btn attendance-btn" data-status="ausente" style="background-color: #f87171; color: white;">Ausente</button>
-                                        <button class="btn attendance-btn" data-status="tardanza" style="background-color: #fbbf24; color: white;">Tardanza</button>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-group" style="margin-top: 1.5rem;">
-                                    <button class="btn btn-primary" style="width: 100%;" id="saveStudentBtn">
-                                        <i class="fas fa-save"></i> Guardar Cambios
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -608,55 +677,137 @@
                 </div>
             </div>
 
-            <!-- Reports Section -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Reportes y Estadísticas</h2>
-                    <div class="actions">
-                        <button class="btn btn-primary" id="exportReportBtn">
-                            <i class="fas fa-download"></i> Exportar Reporte
-                        </button>
+            <!-- Reports Tab -->
+            <div id="reportsTab" class="tab-content">
+                <!-- Reports Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Reportes y Estadísticas</h2>
+                        <div class="actions">
+                            <button class="btn btn-primary" id="exportReportBtn">
+                                <i class="fas fa-download"></i> Exportar Reporte
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div class="dashboard-grid">
-                        <!-- Attendance Chart -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Asistencia por Grupo</h3>
+                    <div class="card-body">
+                        <div class="dashboard-grid">
+                            <!-- Attendance Chart -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Asistencia por Grupo</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="attendanceChart"></canvas>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <div class="chart-container">
-                                    <canvas id="attendanceChart"></canvas>
+                            
+                            <!-- Student Performance -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Rendimiento de Estudiantes</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="performanceChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Student Performance -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Rendimiento de Estudiantes</h3>
-                            </div>
-                            <div class="card-body">
-                                <div class="chart-container">
-                                    <canvas id="performanceChart"></canvas>
-                                </div>
+                        <div style="margin-top: 1.5rem;">
+                            <h3 style="margin-bottom: 1rem;">Exportar datos</h3>
+                            <div style="display: flex; gap: 1rem;">
+                                <button class="btn btn-outline" id="exportExcelBtn">
+                                    <i class="fas fa-file-excel"></i> Excel (.xlsx)
+                                </button>
+                                <button class="btn btn-outline" id="exportOdfBtn">
+                                    <i class="fas fa-file-alt"></i> ODF
+                                </button>
+                                <button class="btn btn-outline" id="exportPdfBtn">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </button>
                             </div>
                         </div>
                     </div>
-                    
-                    <div style="margin-top: 1.5rem;">
-                        <h3 style="margin-bottom: 1rem;">Exportar datos</h3>
-                        <div style="display: flex; gap: 1rem;">
-                            <button class="btn btn-outline" id="exportExcelBtn">
-                                <i class="fas fa-file-excel"></i> Excel (.xlsx)
-                            </button>
-                            <button class="btn btn-outline" id="exportOdfBtn">
-                                <i class="fas fa-file-alt"></i> ODF
-                            </button>
-                            <button class="btn btn-outline" id="exportPdfBtn">
-                                <i class="fas fa-file-pdf"></i> PDF
-                            </button>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settingsTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Configuración</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="dashboard-grid">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Ajustes de la Aplicación</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label class="form-label">Sincronización automática</label>
+                                        <div>
+                                            <label class="switch">
+                                                <input type="checkbox" id="autoSyncToggle" checked>
+                                                <span class="slider round"></span>
+                                            </label>
+                                            <span style="margin-left: 10px;">Activar sincronización en segundo plano</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Frecuencia de sincronización</label>
+                                        <select class="form-control" id="syncFrequency">
+                                            <option value="5">Cada 5 minutos</option>
+                                            <option value="15">Cada 15 minutos</option>
+                                            <option value="30">Cada 30 minutos</option>
+                                            <option value="60">Cada hora</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Modo oscuro</label>
+                                        <div>
+                                            <label class="switch">
+                                                <input type="checkbox" id="darkModeToggle">
+                                                <span class="slider round"></span>
+                                            </label>
+                                            <span style="margin-left: 10px;">Activar modo oscuro</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group" style="margin-top: 1.5rem;">
+                                        <button class="btn btn-primary" style="width: 100%;">
+                                            <i class="fas fa-save"></i> Guardar Configuración
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Información de la Aplicación</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; text-align: center;">
+                                        <img src="icono-512.png" alt="Klassia Logo" style="width: 120px; height: 120px; border-radius: 16px;">
+                                        <h3>Klassia v1.0</h3>
+                                        <p>Sistema de control de asistencia</p>
+                                        <p>Desarrollado por tu equipo de desarrollo</p>
+                                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                            <button class="btn btn-outline">
+                                                <i class="fas fa-question-circle"></i> Ayuda
+                                            </button>
+                                            <button class="btn btn-outline">
+                                                <i class="fas fa-envelope"></i> Soporte
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1576,6 +1727,25 @@
                 loadGroups();
                 loadStudents();
                 
+                // Navegación por pestañas
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        // Remover clase activa de todas las pestañas
+                        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                        // Agregar clase activa a la pestaña actual
+                        this.classList.add('active');
+                        
+                        // Ocultar todos los contenidos de pestañas
+                        document.querySelectorAll('.tab-content').forEach(content => {
+                            content.classList.remove('active');
+                        });
+                        
+                        // Mostrar el contenido de la pestaña seleccionada
+                        const tabId = this.getAttribute('data-tab') + 'Tab';
+                        document.getElementById(tabId).classList.add('active');
+                    });
+                });
+                
             } catch (error) {
                 console.error('Error inicializando aplicación:', error);
                 alert('Error al iniciar la aplicación. Por favor recarga la página.');
@@ -1590,7 +1760,10 @@
                     const urlsToCache = [
                         '/',
                         '/index.html',
-                        '/manifest.json'
+                        '/manifest.json',
+                        '/portada.png',
+                        '/icono-192.png',
+                        '/icono-512.png'
                     ];
 
                     self.addEventListener('install', event => {
