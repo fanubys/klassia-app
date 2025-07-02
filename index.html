@@ -842,6 +842,13 @@
                         <div class="dashboard-grid">
                             <!-- Student List -->
                             <div>
+                                <div class="form-group">
+                                    <label class="form-label">Filtrar por grupo:</label>
+                                    <select class="form-control" id="groupFilter">
+                                        <option value="all">Todos los grupos</option>
+                                        <!-- Grupos se cargarán dinámicamente -->
+                                    </select>
+                                </div>
                                 <table class="table" id="studentsTable">
                                     <thead>
                                         <tr>
@@ -1243,11 +1250,11 @@
             },
             
             async updateStudentAttendance(studentId, status) {
-                const student = await this.students.getItem(studentId);
+                const student = await db.students.getItem(studentId);
                 if (student) {
                     student.lastAttendanceStatus = status;
                     student.lastAttendanceDate = new Date().toISOString().split('T')[0];
-                    await this.students.setItem(studentId, student);
+                    await db.students.setItem(studentId, student);
                     return true;
                 }
                 return false;
@@ -1426,6 +1433,16 @@
                 groupSelect.appendChild(option);
             });
             
+            // Actualizar filtro de grupos
+            const groupFilter = document.getElementById('groupFilter');
+            groupFilter.innerHTML = '<option value="all">Todos los grupos</option>';
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group.id;
+                option.textContent = group.name;
+                groupFilter.appendChild(option);
+            });
+            
             // Eventos para eliminar grupos
             document.querySelectorAll('.delete-group').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -1459,10 +1476,14 @@
             });
         }
         
-        async function loadStudents() {
+        // Modificada para filtrar por grupo
+        async function loadStudents(groupId = null) {
             const students = [];
             await db.students.iterate((value, key) => {
-                students.push(value);
+                // Si se proporciona un groupId, filtrar estudiantes
+                if (!groupId || groupId === 'all' || value.groupId === groupId) {
+                    students.push(value);
+                }
             });
             
             // Actualizar UI
@@ -1669,17 +1690,26 @@
             }, 5000);
         }
         
-        // Inicializar gráficos
-        function initCharts() {
+        // Inicializar gráficos con datos reales
+        async function initCharts() {
+            // Obtener datos reales para los gráficos
+            const groups = [];
+            const groupAttendance = [];
+            
+            await db.groups.iterate((group) => {
+                groups.push(group.name);
+                groupAttendance.push(group.attendanceRate || 0);
+            });
+            
             // Gráfico de asistencia por grupo
             const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
             new Chart(attendanceCtx, {
                 type: 'bar',
                 data: {
-                    labels: ['Grupo A', 'Grupo B', 'Grupo C', 'Grupo D'],
+                    labels: groups,
                     datasets: [{
                         label: 'Porcentaje de Asistencia',
-                        data: [85, 92, 78, 95],
+                        data: groupAttendance,
                         backgroundColor: [
                             'rgba(75, 192, 192, 0.6)',
                             'rgba(54, 162, 235, 0.6)',
@@ -1712,6 +1742,21 @@
                 }
             });
             
+            // Obtener datos para rendimiento general
+            let presentCount = 0;
+            let absentCount = 0;
+            let lateCount = 0;
+            
+            await db.students.iterate((student) => {
+                if (student.lastAttendanceStatus === 'presente') {
+                    presentCount++;
+                } else if (student.lastAttendanceStatus === 'ausente') {
+                    absentCount++;
+                } else if (student.lastAttendanceStatus === 'tardanza') {
+                    lateCount++;
+                }
+            });
+            
             // Gráfico de rendimiento de estudiantes
             const performanceCtx = document.getElementById('performanceChart').getContext('2d');
             new Chart(performanceCtx, {
@@ -1720,7 +1765,7 @@
                     labels: ['Presente', 'Ausente', 'Tardanza'],
                     datasets: [{
                         label: 'Distribución de Asistencia',
-                        data: [75, 15, 10],
+                        data: [presentCount, absentCount, lateCount],
                         backgroundColor: [
                             'rgba(75, 192, 192, 0.6)',
                             'rgba(255, 99, 132, 0.6)',
@@ -2023,6 +2068,9 @@
                                 }
                             }
                             
+                            // Actualizar estadísticas
+                            await updateStatistics();
+                            
                             // Mostrar notificación de guardado automático
                             showAutoSaveNotification();
                         }
@@ -2112,6 +2160,12 @@
                     document.getElementById('editGroupModal').style.display = 'none';
                 });
                 
+                // Filtro por grupo
+                document.getElementById('groupFilter').addEventListener('change', function() {
+                    const groupId = this.value;
+                    loadStudents(groupId === 'all' ? null : groupId);
+                });
+                
                 // Inicializar gráficos cuando se muestre la pestaña de reportes
                 document.getElementById('reportsTab').addEventListener('click', initCharts);
                 
@@ -2139,6 +2193,42 @@
             setTimeout(() => {
                 toast.remove();
             }, 3000);
+        }
+        
+        // Actualizar estadísticas globales
+        async function updateStatistics() {
+            // Calcular asistencia general
+            let presentCount = 0;
+            let totalStudents = 0;
+            
+            await db.students.iterate((student) => {
+                totalStudents++;
+                if (student.lastAttendanceStatus === 'presente') {
+                    presentCount++;
+                }
+            });
+            
+            const attendanceRate = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
+            document.getElementById('attendanceRate').textContent = `${attendanceRate}%`;
+            
+            // Calcular estadísticas por grupo
+            await db.groups.iterate(async (group) => {
+                let groupPresentCount = 0;
+                let groupTotalStudents = 0;
+                
+                await db.students.iterate((student) => {
+                    if (student.groupId === group.id) {
+                        groupTotalStudents++;
+                        if (student.lastAttendanceStatus === 'presente') {
+                            groupPresentCount++;
+                        }
+                    }
+                });
+                
+                const groupAttendanceRate = groupTotalStudents > 0 ? Math.round((groupPresentCount / groupTotalStudents) * 100) : 0;
+                group.attendanceRate = groupAttendanceRate;
+                await db.groups.setItem(group.id, group);
+            });
         }
     </script>
 </body>
