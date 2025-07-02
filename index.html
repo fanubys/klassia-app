@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Klassia - Control de Asistencia</title>
     <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="icon-192.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/localforage/dist/localforage.min.js"></script>
@@ -447,6 +448,44 @@
             margin-bottom: 1.5rem;
         }
         
+        /* Botones flotantes */
+        .floating-buttons {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 100;
+        }
+        
+        .floating-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        .floating-btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .floating-btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .floating-btn:hover {
+            transform: scale(1.1);
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .nav-tabs {
@@ -467,6 +506,17 @@
             
             .welcome-title {
                 font-size: 1.5rem;
+            }
+            
+            .floating-buttons {
+                bottom: 1rem;
+                right: 1rem;
+            }
+            
+            .floating-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -497,7 +547,7 @@
                     <div class="welcome-container">
                         <h1 class="welcome-title">Bienvenido a Klassia</h1>
                         <p class="welcome-text">Sistema de control de asistencia para instituciones educativas</p>
-                        <img src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=2070&auto=format&fit=crop" alt="Klassia - Control de Asistencia" class="welcome-image">
+                        <img src="portada.png" alt="Klassia - Control de Asistencia" class="welcome-image">
                         <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                             <button class="btn btn-primary" id="startNowBtn">
                                 <i class="fas fa-play"></i> Empezar ahora
@@ -792,7 +842,7 @@
                                 </div>
                                 <div class="card-body">
                                     <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; text-align: center;">
-                                        <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop" alt="Klassia Logo" style="width: 120px; height: 120px; border-radius: 16px;">
+                                        <img src="icon-512.png" alt="Klassia Logo" style="width: 120px; height: 120px; border-radius: 16px;">
                                         <h3>Klassia v1.0</h3>
                                         <p>Sistema de control de asistencia</p>
                                         <p>Desarrollado por tu equipo de desarrollo</p>
@@ -812,6 +862,16 @@
                 </div>
             </div>
         </main>
+
+        <!-- Botones flotantes -->
+        <div class="floating-buttons">
+            <div class="floating-btn floating-btn-primary" id="addStudentFloatingBtn" title="Agregar estudiante">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="floating-btn floating-btn-danger" id="deleteStudentFloatingBtn" title="Eliminar estudiante" style="display: none;">
+                <i class="fas fa-user-minus"></i>
+            </div>
+        </div>
 
         <!-- Offline Indicator -->
         <div class="offline-indicator" id="offlineIndicator">
@@ -854,6 +914,13 @@
                 <div class="form-group">
                     <label class="form-label">Nombre del Grupo</label>
                     <input type="text" class="form-control" id="groupName" placeholder="Ingrese nombre del grupo">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Formato de nombres</label>
+                    <select class="form-control" id="nameFormat">
+                        <option value="single">Columna única (Nombre completo)</option>
+                        <option value="two">Dos columnas (Nombre y Apellido)</option>
+                    </select>
                 </div>
                 <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                     <button class="btn btn-primary" id="importConfirmBtn">
@@ -955,6 +1022,10 @@
                 
                 // Eliminar el grupo
                 await this.groups.removeItem(groupId);
+            },
+            
+            async deleteStudent(studentId) {
+                await this.students.removeItem(studentId);
             }
         };
         
@@ -1334,6 +1405,9 @@
                         <button class="btn btn-outline edit-student" data-id="${student.id}">
                             <i class="fas fa-edit"></i>
                         </button>
+                        <button class="btn btn-danger delete-student" data-id="${student.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </td>
                 `;
                 studentsTable.appendChild(row);
@@ -1359,8 +1433,27 @@
                                     break;
                                 }
                             }
+                            
+                            // Mostrar botón de eliminar flotante
+                            document.getElementById('deleteStudentFloatingBtn').style.display = 'flex';
                         }
                     });
+                });
+            });
+            
+            // Agregar event listeners para eliminar estudiantes
+            document.querySelectorAll('#studentsTable .delete-student').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const studentId = this.dataset.id;
+                    showConfirmation(
+                        '¿Eliminar estudiante?',
+                        'Esta acción eliminará al estudiante permanentemente. ¿Continuar?',
+                        async () => {
+                            await db.deleteStudent(studentId);
+                            loadStudents();
+                            document.getElementById('deleteStudentFloatingBtn').style.display = 'none';
+                        }
+                    );
                 });
             });
         }
@@ -1421,7 +1514,7 @@
                         const workbook = XLSX.read(data, { type: 'array' });
                         const firstSheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[firstSheetName];
-                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                         resolve(jsonData);
                     } catch (error) {
                         reject(error);
@@ -1574,6 +1667,7 @@
                 document.getElementById('importConfirmBtn').addEventListener('click', async () => {
                     const fileInput = document.getElementById('importFile');
                     const groupNameInput = document.getElementById('groupName');
+                    const nameFormat = document.getElementById('nameFormat').value;
                     
                     if (!fileInput.files.length || !groupNameInput.value) {
                         alert('Por favor, seleccione un archivo e ingrese un nombre para el grupo');
@@ -1586,17 +1680,46 @@
                     
                     try {
                         if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-                            studentsData = await importExcel(file);
+                            const rawData = await importExcel(file);
+                            // Omitir la primera fila (encabezados)
+                            for (let i = 1; i < rawData.length; i++) {
+                                const row = rawData[i];
+                                if (nameFormat === 'single' && row[0]) {
+                                    const fullName = row[0].trim();
+                                    const firstName = fullName.split(' ')[0];
+                                    const lastName = fullName.split(' ').slice(1).join(' ') || '';
+                                    studentsData.push({ firstName, lastName });
+                                } else if (nameFormat === 'two' && row[0] && row[1]) {
+                                    studentsData.push({
+                                        firstName: row[0].trim(),
+                                        lastName: row[1].trim()
+                                    });
+                                }
+                            }
                         } else if (file.name.endsWith('.csv')) {
                             const text = await new Promise((resolve) => {
                                 const reader = new FileReader();
                                 reader.onload = (e) => resolve(e.target.result);
                                 reader.readAsText(file);
                             });
-                            studentsData = text.split('\n').slice(1).map(line => {
-                                const [firstName, lastName] = line.split(',');
-                                return { firstName, lastName };
-                            });
+                            // Dividir en líneas y omitir la primera (encabezados)
+                            const lines = text.split('\n');
+                            for (let i = 1; i < lines.length; i++) {
+                                const line = lines[i].trim();
+                                if (!line) continue;
+                                const columns = line.split(',');
+                                if (nameFormat === 'single' && columns[0]) {
+                                    const fullName = columns[0].trim();
+                                    const firstName = fullName.split(' ')[0];
+                                    const lastName = fullName.split(' ').slice(1).join(' ') || '';
+                                    studentsData.push({ firstName, lastName });
+                                } else if (nameFormat === 'two' && columns[0] && columns[1]) {
+                                    studentsData.push({
+                                        firstName: columns[0].trim(),
+                                        lastName: columns[1].trim()
+                                    });
+                                }
+                            }
                         } else {
                             throw new Error('Formato de archivo no soportado');
                         }
@@ -1618,17 +1741,16 @@
                                 // Procesar estudiantes
                                 for (let i = 0; i < studentsData.length; i++) {
                                     const student = studentsData[i];
-                                    if (student.firstName && student.lastName) {
-                                        const studentId = Date.now().toString() + i;
-                                        await db.students.setItem(studentId, {
-                                            id: studentId,
-                                            firstName: student.firstName.trim(),
-                                            lastName: student.lastName.trim(),
-                                            groupId: groupId,
-                                            syncStatus: 'pending'
-                                        });
-                                        await db.addToPending('students', studentId);
-                                    }
+                                    const studentId = Date.now().toString() + i;
+                                    await db.students.setItem(studentId, {
+                                        id: studentId,
+                                        firstName: student.firstName,
+                                        lastName: student.lastName,
+                                        groupId: groupId,
+                                        groupName: groupName,
+                                        syncStatus: 'pending'
+                                    });
+                                    await db.addToPending('students', studentId);
                                 }
                                 
                                 alert('Grupo importado correctamente. Los datos se sincronizarán cuando haya conexión.');
@@ -1760,6 +1882,32 @@
                     activateTab('dashboard');
                 });
                 
+                // Botón flotante para agregar estudiantes
+                document.getElementById('addStudentFloatingBtn').addEventListener('click', () => {
+                    activateTab('attendance');
+                    document.getElementById('studentName').value = '';
+                    document.getElementById('studentPhoto').src = 'https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff';
+                    photoService.currentStudentId = null;
+                    document.getElementById('studentGroup').selectedIndex = 0;
+                });
+                
+                // Botón flotante para eliminar estudiantes
+                document.getElementById('deleteStudentFloatingBtn').addEventListener('click', () => {
+                    if (photoService.currentStudentId) {
+                        showConfirmation(
+                            '¿Eliminar estudiante?',
+                            'Esta acción eliminará al estudiante permanentemente. ¿Continuar?',
+                            async () => {
+                                await db.deleteStudent(photoService.currentStudentId);
+                                loadStudents();
+                                document.getElementById('deleteStudentFloatingBtn').style.display = 'none';
+                            }
+                        );
+                    } else {
+                        alert('Por favor, seleccione un estudiante primero');
+                    }
+                });
+                
                 // Cargar datos iniciales
                 loadGroups();
                 loadStudents();
@@ -1780,8 +1928,8 @@
                         '/index.html',
                         '/manifest.json',
                         '/portada.png',
-                        '/icono-192.png',
-                        '/icono-512.png'
+                        '/icon-192.png',
+                        '/icon-512.png'
                     ];
 
                     self.addEventListener('install', event => {
