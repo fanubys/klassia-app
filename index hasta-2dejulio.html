@@ -9,9 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/localforage/dist/localforage.min.js"></script>
     <script src="https://unpkg.com/parse/dist/parse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root {
             --primary: #4361ee;
@@ -280,7 +277,6 @@
             align-items: center;
             gap: 1rem;
             margin-bottom: 1rem;
-            position: relative;
         }
         
         .camera-container {
@@ -315,35 +311,6 @@
             border-radius: 50%;
             object-fit: cover;
             border: 3px solid var(--primary);
-            cursor: pointer;
-            transition: transform 0.3s ease, z-index 0.3s ease;
-        }
-
-        .student-photo:hover {
-            transform: scale(1.8);
-            z-index: 1000;
-        }
-
-        /* Zoom overlay */
-        .photo-zoom-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            cursor: zoom-out;
-        }
-        
-        .zoomed-photo {
-            max-width: 90%;
-            max-height: 90%;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         }
 
         /* Offline indicator */
@@ -378,37 +345,6 @@
             box-shadow: var(--shadow);
         }
         
-        /* Modal de confirmación */
-        .confirmation-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-        
-        .confirmation-box {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 2rem;
-            max-width: 90%;
-            width: 500px;
-            text-align: center;
-            box-shadow: var(--shadow);
-        }
-        
-        .confirmation-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-        
         /* Responsive */
         @media (max-width: 768px) {
             .nav-tabs {
@@ -421,10 +357,6 @@
             
             .dashboard-grid {
                 grid-template-columns: 1fr;
-            }
-            
-            .confirmation-box {
-                padding: 1.5rem;
             }
         }
     </style>
@@ -504,7 +436,7 @@
                     <h2 class="card-title">Grupos</h2>
                     <div class="actions">
                         <button class="btn btn-outline" id="importCsvBtn">
-                            <i class="fas fa-file-import"></i> Importar CSV/Excel
+                            <i class="fas fa-file-import"></i> Importar CSV
                         </button>
                     </div>
                 </div>
@@ -649,7 +581,7 @@
                         <h3 style="margin-bottom: 1rem;">Exportar datos</h3>
                         <div style="display: flex; gap: 1rem;">
                             <button class="btn btn-outline" id="exportExcelBtn">
-                                <i class="fas fa-file-excel"></i> Excel (.xlsx)
+                                <i class="fas fa-file-excel"></i> Excel (.xls)
                             </button>
                             <button class="btn btn-outline" id="exportOdfBtn">
                                 <i class="fas fa-file-alt"></i> ODF
@@ -693,41 +625,25 @@
             </div>
         </div>
         
-        <!-- Import Modal -->
-        <div id="importModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center;">
+        <!-- CSV Import Modal -->
+        <div id="csvModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center;">
             <div style="background: white; border-radius: 8px; padding: 20px; width: 90%; max-width: 500px;">
-                <h3>Importar Grupo</h3>
+                <h3>Importar Grupo desde CSV</h3>
                 <div class="form-group">
-                    <label class="form-label">Seleccionar archivo (CSV, Excel, ODF)</label>
-                    <input type="file" class="form-control" id="importFile" accept=".csv,.xlsx,.xls,.ods">
+                    <label class="form-label">Seleccionar archivo CSV</label>
+                    <input type="file" class="form-control" id="csvFile" accept=".csv">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Nombre del Grupo</label>
                     <input type="text" class="form-control" id="groupName" placeholder="Ingrese nombre del grupo">
                 </div>
                 <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                    <button class="btn btn-primary" id="importConfirmBtn">
+                    <button class="btn btn-primary" id="importCsvConfirmBtn">
                         <i class="fas fa-file-import"></i> Importar
                     </button>
-                    <button class="btn btn-danger" id="cancelImportBtn">
+                    <button class="btn btn-danger" id="cancelCsvBtn">
                         <i class="fas fa-times"></i> Cancelar
                     </button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Zoom Overlay -->
-        <div id="zoomOverlay" class="photo-zoom-overlay" style="display: none;">
-            <img id="zoomedPhoto" class="zoomed-photo" src="" alt="Foto ampliada">
-        </div>
-        
-        <!-- Confirmation Modal -->
-        <div id="confirmationModal" class="confirmation-modal" style="display: none;">
-            <div class="confirmation-box">
-                <h3 id="confirmationMessage">¿Está seguro de realizar esta acción?</h3>
-                <div class="confirmation-buttons">
-                    <button class="btn btn-danger" id="confirmCancel">Cancelar</button>
-                    <button class="btn btn-primary" id="confirmAction">Confirmar</button>
                 </div>
             </div>
         </div>
@@ -788,23 +704,6 @@
             
             async clearPendingSync() {
                 await this.pendingSync.setItem('pending', []);
-            },
-            
-            async deleteGroup(groupId) {
-                // Eliminar estudiantes del grupo
-                const students = [];
-                await this.students.iterate((student, key) => {
-                    if (student.groupId === groupId) {
-                        students.push(key);
-                    }
-                });
-                
-                for (const studentId of students) {
-                    await this.students.removeItem(studentId);
-                }
-                
-                // Eliminar el grupo
-                await this.groups.removeItem(groupId);
             }
         };
         
@@ -1004,26 +903,11 @@
                 this.videoElement = document.getElementById('cameraVideo');
                 this.canvasElement = document.getElementById('cameraCanvas');
                 this.cameraModal = document.getElementById('cameraModal');
-                this.zoomOverlay = document.getElementById('zoomOverlay');
-                this.zoomedPhoto = document.getElementById('zoomedPhoto');
                 
                 document.getElementById('takePhotoBtn').addEventListener('click', () => this.startCamera());
                 document.getElementById('uploadPhotoBtn').addEventListener('click', () => this.uploadPhoto());
                 document.getElementById('captureBtn').addEventListener('click', () => this.capturePhoto());
                 document.getElementById('cancelCameraBtn').addEventListener('click', () => this.stopCamera());
-                
-                // Zoom de foto
-                document.getElementById('studentPhoto').addEventListener('click', (e) => {
-                    if (e.target.src && e.target.src !== 'https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff') {
-                        this.zoomedPhoto.src = e.target.src;
-                        this.zoomOverlay.style.display = 'flex';
-                    }
-                });
-                
-                // Cerrar zoom
-                this.zoomOverlay.addEventListener('click', () => {
-                    this.zoomOverlay.style.display = 'none';
-                });
             },
             
             async startCamera(studentId = null) {
@@ -1127,8 +1011,8 @@
                         <button class="btn btn-outline edit-group" data-id="${group.id}">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-danger delete-group" data-id="${group.id}">
-                            <i class="fas fa-trash"></i>
+                        <button class="btn btn-outline stats-group" data-id="${group.id}">
+                            <i class="fas fa-chart-bar"></i>
                         </button>
                     </td>
                 `;
@@ -1145,22 +1029,6 @@
                 option.value = group.id;
                 option.textContent = group.name;
                 groupSelect.appendChild(option);
-            });
-            
-            // Eventos para eliminar grupos
-            document.querySelectorAll('.delete-group').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const groupId = this.dataset.id;
-                    showConfirmation(
-                        '¿Eliminar grupo?',
-                        'Esta acción eliminará el grupo y todos sus estudiantes. ¿Continuar?',
-                        async () => {
-                            await db.deleteGroup(groupId);
-                            loadGroups();
-                            loadStudents();
-                        }
-                    );
-                });
             });
         }
         
@@ -1261,106 +1129,6 @@
             }
         }
         
-        // Funciones para importación/exportación
-        function importExcel(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheetName = workbook.SheetNames[0];
-                        const worksheet = workbook.Sheets[firstSheetName];
-                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                        resolve(jsonData);
-                    } catch (error) {
-                        reject(error);
-                    }
-                };
-                reader.readAsArrayBuffer(file);
-            });
-        }
-        
-        function exportToExcel() {
-            // Obtener datos de estudiantes
-            const students = [];
-            db.students.iterate((student) => {
-                students.push({
-                    'Nombre': student.firstName,
-                    'Apellido': student.lastName,
-                    'Grupo': student.groupName,
-                    'Asistencia': student.attendanceRate || '0%'
-                });
-            }).then(() => {
-                const worksheet = XLSX.utils.json_to_sheet(students);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, 'Estudiantes');
-                XLSX.writeFile(workbook, 'estudiantes_klassia.xlsx');
-            });
-        }
-        
-        function exportToODF() {
-            // Simulación de exportación a ODF
-            alert('Exportación a ODF en desarrollo. Por ahora, usa la exportación a Excel o PDF.');
-        }
-        
-        function exportToPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Título
-            doc.setFontSize(18);
-            doc.text('Reporte de Estudiantes - Klassia', 105, 15, null, null, 'center');
-            
-            // Fecha
-            doc.setFontSize(10);
-            doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 105, 22, null, null, 'center');
-            
-            // Datos
-            const headers = [['Nombre', 'Apellido', 'Grupo', 'Asistencia']];
-            const data = [];
-            
-            db.students.iterate((student) => {
-                data.push([
-                    student.firstName,
-                    student.lastName,
-                    student.groupName || 'Sin grupo',
-                    student.attendanceRate || '0%'
-                ]);
-            }).then(() => {
-                doc.autoTable({
-                    head: headers,
-                    body: data,
-                    startY: 30,
-                    styles: { fontSize: 10 },
-                    headStyles: { fillColor: [67, 97, 238] }
-                });
-                
-                doc.save('estudiantes_klassia.pdf');
-            });
-        }
-        
-        // Función para mostrar confirmación
-        function showConfirmation(title, message, callback) {
-            const modal = document.getElementById('confirmationModal');
-            const messageElement = document.getElementById('confirmationMessage');
-            const confirmButton = document.getElementById('confirmAction');
-            const cancelButton = document.getElementById('confirmCancel');
-            
-            messageElement.innerHTML = `<strong>${title}</strong><br>${message}`;
-            modal.style.display = 'flex';
-            
-            // Configurar acciones
-            confirmButton.onclick = function() {
-                modal.style.display = 'none';
-                callback();
-            };
-            
-            cancelButton.onclick = function() {
-                modal.style.display = 'none';
-            };
-        }
-        
         // Inicialización de la aplicación
         document.addEventListener('DOMContentLoaded', async () => {
             try {
@@ -1387,93 +1155,67 @@
                 // Generar calendario
                 generateCalendar();
                 
-                // Manejar importación
+                // Manejar CSV import
                 document.getElementById('importCsvBtn').addEventListener('click', () => {
-                    document.getElementById('importModal').style.display = 'flex';
+                    document.getElementById('csvModal').style.display = 'flex';
                 });
                 
-                document.getElementById('cancelImportBtn').addEventListener('click', () => {
-                    document.getElementById('importModal').style.display = 'none';
+                document.getElementById('cancelCsvBtn').addEventListener('click', () => {
+                    document.getElementById('csvModal').style.display = 'none';
                 });
                 
-                document.getElementById('importConfirmBtn').addEventListener('click', async () => {
-                    const fileInput = document.getElementById('importFile');
+                document.getElementById('importCsvConfirmBtn').addEventListener('click', async () => {
+                    const fileInput = document.getElementById('csvFile');
                     const groupNameInput = document.getElementById('groupName');
                     
                     if (!fileInput.files.length || !groupNameInput.value) {
-                        alert('Por favor, seleccione un archivo e ingrese un nombre para el grupo');
+                        alert('Por favor, seleccione un archivo CSV e ingrese un nombre para el grupo');
                         return;
                     }
                     
                     const file = fileInput.files[0];
                     const groupName = groupNameInput.value;
-                    let studentsData = [];
                     
-                    try {
-                        if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-                            studentsData = await importExcel(file);
-                        } else if (file.name.endsWith('.csv')) {
-                            const text = await new Promise((resolve) => {
-                                const reader = new FileReader();
-                                reader.onload = (e) => resolve(e.target.result);
-                                reader.readAsText(file);
-                            });
-                            studentsData = text.split('\n').slice(1).map(line => {
-                                const [firstName, lastName] = line.split(',');
-                                return { firstName, lastName };
-                            });
-                        } else {
-                            throw new Error('Formato de archivo no soportado');
-                        }
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const csvData = e.target.result;
+                        const lines = csvData.split('\n');
                         
-                        // Confirmar importación
-                        showConfirmation(
-                            'Importar Grupo',
-                            `¿Importar ${studentsData.length} estudiantes al grupo "${groupName}"?`,
-                            async () => {
-                                // Crear grupo en la base de datos
-                                const groupId = Date.now().toString();
-                                await db.groups.setItem(groupId, {
-                                    id: groupId,
-                                    name: groupName,
+                        // Crear grupo en la base de datos
+                        const groupId = Date.now().toString();
+                        await db.groups.setItem(groupId, {
+                            id: groupId,
+                            name: groupName,
+                            syncStatus: 'pending'
+                        });
+                        await db.addToPending('groups', groupId);
+                        
+                        // Procesar estudiantes
+                        for (let i = 1; i < lines.length; i++) {
+                            const [firstName, lastName] = lines[i].split(',');
+                            if (firstName && lastName) {
+                                const studentId = Date.now().toString() + i;
+                                await db.students.setItem(studentId, {
+                                    id: studentId,
+                                    firstName: firstName.trim(),
+                                    lastName: lastName.trim(),
+                                    groupId: groupId,
                                     syncStatus: 'pending'
                                 });
-                                await db.addToPending('groups', groupId);
-                                
-                                // Procesar estudiantes
-                                for (let i = 0; i < studentsData.length; i++) {
-                                    const student = studentsData[i];
-                                    if (student.firstName && student.lastName) {
-                                        const studentId = Date.now().toString() + i;
-                                        await db.students.setItem(studentId, {
-                                            id: studentId,
-                                            firstName: student.firstName.trim(),
-                                            lastName: student.lastName.trim(),
-                                            groupId: groupId,
-                                            syncStatus: 'pending'
-                                        });
-                                        await db.addToPending('students', studentId);
-                                    }
-                                }
-                                
-                                alert('Grupo importado correctamente. Los datos se sincronizarán cuando haya conexión.');
-                                document.getElementById('importModal').style.display = 'none';
-                                
-                                // Recargar datos
-                                loadGroups();
-                                loadStudents();
+                                await db.addToPending('students', studentId);
                             }
-                        );
-                    } catch (error) {
-                        console.error('Error importando archivo:', error);
-                        alert('Error al importar el archivo: ' + error.message);
-                    }
+                        }
+                        
+                        alert('Grupo importado correctamente. Los datos se sincronizarán cuando haya conexión.');
+                        document.getElementById('csvModal').style.display = 'none';
+                        
+                        // Recargar datos
+                        loadGroups();
+                        loadStudents();
+                    };
+                    
+                    reader.readAsText(file);
                 });
-                
-                // Exportaciones
-                document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
-                document.getElementById('exportOdfBtn').addEventListener('click', exportToODF);
-                document.getElementById('exportPdfBtn').addEventListener('click', exportToPDF);
                 
                 // Registrar nuevo estudiante
                 document.getElementById('saveStudentBtn').addEventListener('click', async () => {
@@ -1485,37 +1227,31 @@
                         return;
                     }
                     
-                    showConfirmation(
-                        'Guardar Estudiante',
-                        '¿Guardar los datos del estudiante?',
-                        async () => {
-                            const [firstName, lastName] = studentName.split(' ');
-                            
-                            if (photoService.currentStudentId) {
-                                // Actualizar estudiante existente
-                                const student = await db.students.getItem(photoService.currentStudentId);
-                                if (student) {
-                                    student.firstName = firstName;
-                                    student.lastName = lastName || '';
-                                    student.groupId = studentGroup;
-                                    await db.students.setItem(photoService.currentStudentId, student);
-                                    await db.addToPending('students', photoService.currentStudentId);
-                                }
-                            } else {
-                                // Crear nuevo estudiante
-                                const studentId = await db.addStudent({
-                                    firstName,
-                                    lastName: lastName || '',
-                                    groupId: studentGroup,
-                                    photo: document.getElementById('studentPhoto').src
-                                });
-                                photoService.currentStudentId = studentId;
-                            }
-                            
-                            alert('Estudiante guardado correctamente');
-                            loadStudents();
+                    const [firstName, lastName] = studentName.split(' ');
+                    
+                    if (photoService.currentStudentId) {
+                        // Actualizar estudiante existente
+                        const student = await db.students.getItem(photoService.currentStudentId);
+                        if (student) {
+                            student.firstName = firstName;
+                            student.lastName = lastName || '';
+                            student.groupId = studentGroup;
+                            await db.students.setItem(photoService.currentStudentId, student);
+                            await db.addToPending('students', photoService.currentStudentId);
                         }
-                    );
+                    } else {
+                        // Crear nuevo estudiante
+                        const studentId = await db.addStudent({
+                            firstName,
+                            lastName: lastName || '',
+                            groupId: studentGroup,
+                            photo: document.getElementById('studentPhoto').src
+                        });
+                        photoService.currentStudentId = studentId;
+                    }
+                    
+                    alert('Estudiante guardado correctamente');
+                    loadStudents();
                 });
                 
                 // Registrar asistencia
@@ -1529,47 +1265,18 @@
                             return;
                         }
                         
-                        showConfirmation(
-                            'Registrar Asistencia',
-                            `¿Registrar asistencia como "${status}"?`,
-                            async () => {
-                                const attendanceId = Date.now().toString();
-                                await db.attendance.setItem(attendanceId, {
-                                    id: attendanceId,
-                                    studentId,
-                                    date: new Date().toISOString(),
-                                    status,
-                                    syncStatus: 'pending'
-                                });
-                                await db.addToPending('attendance', attendanceId);
-                                
-                                alert(`Asistencia registrada: ${status}`);
-                            }
-                        );
+                        const attendanceId = Date.now().toString();
+                        await db.attendance.setItem(attendanceId, {
+                            id: attendanceId,
+                            studentId,
+                            date: new Date().toISOString(),
+                            status,
+                            syncStatus: 'pending'
+                        });
+                        await db.addToPending('attendance', attendanceId);
+                        
+                        alert(`Asistencia registrada: ${status}`);
                     });
-                });
-                
-                // Crear nuevo grupo
-                document.getElementById('newGroupBtn').addEventListener('click', () => {
-                    const groupName = prompt('Ingrese el nombre del nuevo grupo:');
-                    if (groupName) {
-                        showConfirmation(
-                            'Crear Grupo',
-                            `¿Crear el grupo "${groupName}"?`,
-                            async () => {
-                                const groupId = Date.now().toString();
-                                await db.groups.setItem(groupId, {
-                                    id: groupId,
-                                    name: groupName,
-                                    syncStatus: 'pending'
-                                });
-                                await db.addToPending('groups', groupId);
-                                
-                                alert('Grupo creado correctamente');
-                                loadGroups();
-                            }
-                        );
-                    }
                 });
                 
                 // Cargar datos iniciales
