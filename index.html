@@ -624,6 +624,38 @@
             background-color: rgba(67, 97, 238, 0.1);
             border-left: 4px solid var(--primary);
         }
+        
+        /* Indicador de importación */
+        .import-indicator {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background-color: var(--success);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            animation: slideInFromTop 0.5s ease;
+        }
+        
+        .import-indicator.error {
+            background-color: var(--danger);
+        }
+        
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
@@ -1076,7 +1108,7 @@
     </div>
 
     <script>
-        // Configuración de Parse para Back4App usando variables de entorno
+        // Configuración de Parse para Back4App
         const PARSE_APP_ID = window.PARSE_APP_ID || 'TU_APP_ID_BACK4APP';
         const PARSE_JS_KEY = window.PARSE_JS_KEY || 'TU_JS_KEY_BACK4APP';
         const PARSE_SERVER_URL = 'https://parseapi.back4app.com/';
@@ -1295,8 +1327,7 @@
                 document.getElementById('syncIndicator').style.display = 'flex';
                 
                 try {
-                    // Aquí iría la lógica para sincronizar con el servidor
-                    // Simulamos una sincronización exitosa después de 2 segundos
+                    // Simular sincronización
                     setTimeout(async () => {
                         await db.clearPendingSync();
                         document.getElementById('syncIndicator').style.display = 'none';
@@ -1306,10 +1337,6 @@
                     console.error('Error en sincronización:', error);
                     document.getElementById('syncIndicator').style.display = 'none';
                 }
-            },
-            
-            initRealtimeUpdates() {
-                // Aquí iría la lógica para suscribirse a actualizaciones en tiempo real
             }
         };
         
@@ -1582,6 +1609,103 @@
             }, 3000);
         }
         
+        function showImportNotification(message, isSuccess = true) {
+            const indicator = document.createElement('div');
+            indicator.className = `import-indicator ${isSuccess ? '' : 'error'}`;
+            indicator.innerHTML = `
+                <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(indicator);
+            
+            setTimeout(() => {
+                indicator.remove();
+            }, 5000);
+        }
+
+        // Función para procesar archivos Excel
+        async function processExcelFile(file, nameFormat) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        
+                        const students = [];
+                        // Omitir la primera fila (encabezados)
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if (nameFormat === 'single' && row[0]) {
+                                const fullName = row[0].toString().trim();
+                                if (fullName) {
+                                    const firstName = fullName.split(' ')[0];
+                                    const lastName = fullName.split(' ').slice(1).join(' ') || '';
+                                    students.push({ firstName, lastName });
+                                }
+                            } else if (nameFormat === 'two' && row[0] && row[1]) {
+                                const firstName = row[0].toString().trim();
+                                const lastName = row[1].toString().trim();
+                                if (firstName && lastName) {
+                                    students.push({ firstName, lastName });
+                                }
+                            }
+                        }
+                        resolve(students);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Función para procesar archivos CSV
+        async function processCSVFile(file, nameFormat) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const text = e.target.result;
+                        const lines = text.split('\n');
+                        const students = [];
+                        
+                        // Omitir la primera fila (encabezados)
+                        for (let i = 1; i < lines.length; i++) {
+                            const line = lines[i].trim();
+                            if (!line) continue;
+                            
+                            const columns = line.split(',');
+                            if (nameFormat === 'single' && columns[0]) {
+                                const fullName = columns[0].trim();
+                                if (fullName) {
+                                    const firstName = fullName.split(' ')[0];
+                                    const lastName = fullName.split(' ').slice(1).join(' ') || '';
+                                    students.push({ firstName, lastName });
+                                }
+                            } else if (nameFormat === 'two' && columns[0] && columns[1]) {
+                                const firstName = columns[0].trim();
+                                const lastName = columns[1].trim();
+                                if (firstName && lastName) {
+                                    students.push({ firstName, lastName });
+                                }
+                            }
+                        }
+                        resolve(students);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+
         // Inicialización de la aplicación
         document.addEventListener('DOMContentLoaded', async () => {
             try {
@@ -1622,6 +1746,78 @@
                 
                 document.getElementById('cancelImportBtn').addEventListener('click', () => {
                     document.getElementById('importModal').style.display = 'none';
+                });
+                
+                document.getElementById('importConfirmBtn').addEventListener('click', async () => {
+                    const fileInput = document.getElementById('importFile');
+                    const groupNameInput = document.getElementById('groupName');
+                    const nameFormat = document.getElementById('nameFormat').value;
+                    
+                    if (!fileInput.files.length || !groupNameInput.value) {
+                        showImportNotification('Por favor, seleccione un archivo e ingrese un nombre para el grupo', false);
+                        return;
+                    }
+                    
+                    const file = fileInput.files[0];
+                    const groupName = groupNameInput.value;
+                    let studentsData = [];
+                    
+                    try {
+                        if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                            studentsData = await processExcelFile(file, nameFormat);
+                        } else if (file.name.endsWith('.csv')) {
+                            studentsData = await processCSVFile(file, nameFormat);
+                        } else {
+                            throw new Error('Formato de archivo no soportado. Use Excel (.xlsx, .xls) o CSV (.csv)');
+                        }
+                        
+                        if (studentsData.length === 0) {
+                            throw new Error('No se encontraron estudiantes en el archivo');
+                        }
+                        
+                        // Crear grupo en la base de datos
+                        const groupId = Date.now().toString();
+                        await db.groups.setItem(groupId, {
+                            id: groupId,
+                            name: groupName,
+                            studentCount: studentsData.length,
+                            syncStatus: 'pending'
+                        });
+                        await db.addToPending('groups', groupId);
+                        
+                        // Procesar estudiantes
+                        for (let i = 0; i < studentsData.length; i++) {
+                            const student = studentsData[i];
+                            const studentId = Date.now().toString() + i;
+                            await db.students.setItem(studentId, {
+                                id: studentId,
+                                firstName: student.firstName,
+                                lastName: student.lastName,
+                                groupId: groupId,
+                                groupName: groupName,
+                                attendanceRate: '0%',
+                                lastAttendanceStatus: null,
+                                lastAttendanceDate: null,
+                                syncStatus: 'pending'
+                            });
+                            await db.addToPending('students', studentId);
+                        }
+                        
+                        // Cerrar modal y mostrar notificación
+                        document.getElementById('importModal').style.display = 'none';
+                        showImportNotification(`Grupo "${groupName}" importado con ${studentsData.length} estudiantes`, true);
+                        
+                        // Recargar datos
+                        await loadGroups();
+                        await loadStudents();
+                        
+                        // Mostrar pestaña de asistencias
+                        activateTab('attendance');
+                        
+                    } catch (error) {
+                        console.error('Error importando archivo:', error);
+                        showImportNotification('Error al importar: ' + error.message, false);
+                    }
                 });
                 
                 // Botones de asistencia
