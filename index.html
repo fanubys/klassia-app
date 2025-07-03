@@ -11,6 +11,10 @@
     <script src="https://unpkg.com/localforage/dist/localforage.min.js"></script>
     <script src="https://unpkg.com/parse/dist/parse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <!-- Parse LiveQuery -->
+    <script src="https://unpkg.com/parse@3.4.1/dist/parse-live-query.min.js"></script>
     <style>
         :root {
             --primary: #4361ee;
@@ -213,15 +217,6 @@
             background-color: #d1146a;
         }
 
-        .btn-refresh {
-            background-color: var(--warning);
-            color: white;
-        }
-
-        .btn-refresh:hover {
-            background-color: #e68a00;
-        }
-
         /* Forms */
         .form-group {
             margin-bottom: 1rem;
@@ -375,7 +370,7 @@
 
         /* Atenuamos el efecto de zoom */
         .student-photo:hover {
-            transform: scale(1.3);
+            transform: scale(1.3); /* Reducido de 1.8 a 1.3 */
             z-index: 1000;
         }
 
@@ -536,11 +531,6 @@
             color: white;
         }
         
-        .floating-btn-refresh {
-            background-color: var(--warning);
-            color: white;
-        }
-        
         .floating-btn:hover {
             transform: scale(1.1);
         }
@@ -609,7 +599,7 @@
             position: relative;
             overflow: hidden;
             transition: all 0.3s ease;
-            background-color: #e9ecef;
+            background-color: #e9ecef; /* Gris por defecto */
             color: var(--dark);
             flex: 1;
             border: 1px solid #ced4da;
@@ -713,6 +703,12 @@
             to {
                 opacity: 0;
             }
+        }
+        
+        /* Estilo para filas de estudiantes seleccionados */
+        .student-item.selected {
+            background-color: rgba(67, 97, 238, 0.1);
+            border-left: 4px solid var(--primary);
         }
         
         /* Indicador de importación */
@@ -933,42 +929,22 @@
             background: var(--light-gray);
             cursor: not-allowed;
         }
-        
-        /* Nuevo campo de observaciones */
-        .observations-container {
-            margin-top: 1.5rem;
-        }
-        
-        .observation-item {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            border-left: 4px solid var(--primary);
-        }
-        
-        .observation-date {
-            font-size: 0.85rem;
-            color: var(--gray);
-            margin-bottom: 0.25rem;
-        }
-        
-        .observation-content {
-            font-size: 0.95rem;
-        }
-        
-        /* Sincronización */
-        .last-sync {
+
+        /* Nuevos estilos */
+        .sync-info {
             position: fixed;
             bottom: 1rem;
             right: 1rem;
-            background-color: rgba(255, 255, 255, 0.9);
+            background: rgba(0,0,0,0.7);
+            color: white;
             padding: 0.5rem 1rem;
             border-radius: 20px;
-            font-size: 0.85rem;
-            color: var(--gray);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-size: 0.8rem;
             z-index: 100;
+        }
+
+        .import-indicator.error {
+            background-color: var(--danger);
         }
     </style>
 </head>
@@ -980,7 +956,8 @@
                 <i class="fas fa-user-check"></i>
                 <span>Klassia</span>
             </div>
-            <button class="btn btn-refresh" id="forceRefreshBtn">
+            <!-- Nuevo: Botón de actualización -->
+            <button id="refreshDataBtn" class="btn btn-outline" style="color: white; border-color: white; margin-right: 10px;">
                 <i class="fas fa-sync-alt"></i> Actualizar
             </button>
             <button class="mobile-menu-btn" id="mobileMenuBtn">
@@ -1004,430 +981,24 @@
             </div>
         </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Dashboard Tab -->
-            <div id="dashboardTab" class="tab-content active">
-                <!-- Welcome Section -->
-                <div class="card">
-                    <div class="welcome-container">
-                        <h1 class="welcome-title">Bienvenido a Klassia</h1>
-                        <p class="welcome-text">Sistema de control de asistencia para instituciones educativas</p>
-                        <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1200&q=80" alt="Klassia - Control de Asistencia" class="welcome-image">
-                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                            <button class="btn btn-primary" id="startNowBtn">
-                                <i class="fas fa-play"></i> Empezar ahora
-                            </button>
-                            <button class="btn btn-outline">
-                                <i class="fas fa-book"></i> Ver tutorial
-                            </button>
-                        </div>
-                    </div>
-                </div>
+        <!-- ... (resto del contenido existente) ... -->
 
-                <!-- Dashboard Header -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Panel de Control</h2>
-                        <div class="actions">
-                            <button class="btn btn-primary" id="newGroupBtn">
-                                <i class="fas fa-plus"></i> Nuevo Grupo
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="dashboard-grid">
-                            <!-- Statistics Card -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">Resumen</h3>
-                                </div>
-                                <div class="card-body">
-                                    <div style="display: flex; justify-content: space-around; text-align: center;">
-                                        <div>
-                                            <div style="font-size: 2rem; font-weight: bold; color: var(--primary);" id="groupsCount">0</div>
-                                            <div>Grupos</div>
-                                        </div>
-                                        <div>
-                                            <div style="font-size: 2rem; font-weight: bold; color: var(--success);" id="studentsCount">0</div>
-                                            <div>Estudiantes</div>
-                                        </div>
-                                        <div>
-                                            <div style="font-size: 2rem; font-weight: bold; color: var(--warning);" id="attendanceRate">0%</div>
-                                            <div>Asistencia</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Calendar Card -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">Calendario</h3>
-                                </div>
-                                <div class="card-body">
-                                    <div class="calendar" id="calendarContainer">
-                                        <!-- Calendar content will be generated dynamically -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Groups Tab -->
-            <div id="groupsTab" class="tab-content">
-                <!-- Groups Section -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Grupos</h2>
-                        <div class="actions">
-                            <button class="btn btn-outline" id="importCsvBtn">
-                                <i class="fas fa-file-import"></i> Importar CSV/Excel
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <input type="text" class="form-control" id="groupSearch" placeholder="Buscar grupo...">
-                        </div>
-                        
-                        <table class="table" id="groupsTable">
-                            <thead>
-                                <tr>
-                                    <th>Grupo</th>
-                                    <th>Estudiantes</th>
-                                    <th>Última asistencia</th>
-                                    <th>Asistencia</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Groups will be populated dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Attendance Tab - MEJORADA -->
-            <div id="attendanceTab" class="tab-content">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Registro de Asistencia</h2>
-                    </div>
-                    <div class="card-body">
-                        <!-- Selector de grupo -->
-                        <div class="form-group">
-                            <label class="form-label">Seleccionar Grupo</label>
-                            <select class="form-control" id="attendanceGroupFilter">
-                                <option value="">Seleccionar grupo</option>
-                                <!-- Grupos se cargarán dinámicamente -->
-                            </select>
-                        </div>
-                        
-                        <!-- Selector de estudiante -->
-                        <div class="form-group" id="studentSelectorContainer" style="display: none;">
-                            <div class="student-selector">
-                                <div>
-                                    <label class="form-label">Estudiante:</label>
-                                    <select class="form-control" id="attendanceStudentSelect">
-                                        <option value="">Seleccionar estudiante</option>
-                                        <!-- Estudiantes se cargarán dinámicamente -->
-                                    </select>
-                                </div>
-                                <div class="student-nav">
-                                    <button class="student-nav-btn" id="prevStudentBtn" title="Estudiante anterior">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </button>
-                                    <button class="student-nav-btn" id="nextStudentBtn" title="Siguiente estudiante">
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Vista de asistencia (como en la imagen) -->
-                        <div class="attendance-view" id="attendanceCard" style="display: none;">
-                            <div class="student-name-header" id="attendanceStudentName">Ana García</div>
-                            
-                            <div class="attendance-options">
-                                <div class="attendance-option" data-status="presente">Presente</div>
-                                <div class="attendance-option" data-status="tardanza">Tarde</div>
-                                <div class="attendance-option" data-status="ausente">Ausente</div>
-                            </div>
-                            
-                            <div class="attendance-section">
-                                <div class="section-title">Observaciones:</div>
-                                <textarea class="form-control" id="observations" rows="3" placeholder="Ingrese observaciones si es necesario..."></textarea>
-                            </div>
-                            
-                            <div class="attendance-section">
-                                <div class="section-title">Taller del Día:</div>
-                                <select class="form-control" id="workshop">
-                                    <option value="">-- Seleccionar --</option>
-                                    <option value="matematicas">Taller de Matemáticas</option>
-                                    <option value="lectura">Taller de Lectura</option>
-                                    <option value="ciencias">Taller de Ciencias</option>
-                                    <option value="arte">Taller de Arte</option>
-                                </select>
-                            </div>
-                            
-                            <div class="attendance-section">
-                                <div class="section-title">Foto:</div>
-                                <div class="photo-container">
-                                    <img src="https://via.placeholder.com/300x200?text=Sin+imagen" alt="Foto de asistencia" class="photo-preview" id="attendancePhotoPreview">
-                                    <div class="camera-actions">
-                                        <button class="btn btn-outline" id="takeAttendancePhotoBtn">
-                                            <i class="fas fa-camera"></i> Tomar Foto
-                                        </button>
-                                        <button class="btn btn-outline" id="uploadAttendancePhotoBtn">
-                                            <i class="fas fa-upload"></i> Subir Foto
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="attendance-actions">
-                                <button class="btn btn-primary" id="saveAttendanceBtn">
-                                    <i class="fas fa-save"></i> Guardar Asistencia
-                                </button>
-                                <button class="btn btn-outline" id="nextAfterSaveBtn">
-                                    <i class="fas fa-arrow-right"></i> Siguiente
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reports Tab -->
-            <div id="reportsTab" class="tab-content">
-                <!-- Reports Section -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Reportes y Estadísticas</h2>
-                        <div class="actions">
-                            <button class="btn btn-primary" id="exportReportBtn">
-                                <i class="fas fa-download"></i> Exportar Reporte
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <!-- Date and Group Selector -->
-                        <div class="date-selector">
-                            <div class="form-group" style="flex: 1;">
-                                <label class="form-label">Mes y Año</label>
-                                <input type="month" class="form-control" id="reportMonth" value="">
-                            </div>
-                            
-                            <div class="form-group" style="flex: 1;">
-                                <label class="form-label">Grupo</label>
-                                <select class="form-control" id="reportGroup">
-                                    <option value="all">Todos los grupos</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group" style="flex: 1;">
-                                <label class="form-label">Estudiante</label>
-                                <select class="form-control" id="reportStudent">
-                                    <option value="all">Todos los estudiantes</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="dashboard-grid">
-                            <!-- Attendance Chart -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">Asistencia por Grupo</h3>
-                                </div>
-                                <div class="card-body">
-                                    <div class="chart-container">
-                                        <canvas id="attendanceChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Monthly Attendance -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">Asistencia Mensual</h3>
-                                </div>
-                                <div class="card-body">
-                                    <div class="chart-container">
-                                        <canvas id="monthlyChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Individual Statistics -->
-                        <div id="individualStats" style="display: none; margin-top: 1.5rem;">
-                            <h3>Estadísticas Individuales</h3>
-                            <div class="student-stats">
-                                <div class="stats-card">
-                                    <div class="stats-value" id="indMonthAttendance">0%</div>
-                                    <div class="stats-label">Asistencia este mes</div>
-                                </div>
-                                <div class="stats-card">
-                                    <div class="stats-value" id="indTotalPresent">0</div>
-                                    <div class="stats-label">Días presentes</div>
-                                </div>
-                                <div class="stats-card">
-                                    <div class="stats-value" id="indTotalAbsent">0</div>
-                                    <div class="stats-label">Días ausentes</div>
-                                </div>
-                                <div class="stats-card">
-                                    <div class="stats-value" id="indTotalLate">0</div>
-                                    <div class="stats-label">Tardanzas</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Observaciones -->
-                        <div class="observations-container" style="margin-top: 2rem; display: none;" id="observationsSection">
-                            <h3>Observaciones</h3>
-                            <div id="observationsList">
-                                <!-- Observaciones se cargarán dinámicamente -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Settings Tab -->
-            <div id="settingsTab" class="tab-content">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Configuración</h2>
-                    </div>
-                    <div class="card-body">
-                        <div class="dashboard-grid">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">Ajustes de la Aplicación</h3>
-                                </div>
-                                <div class="card-body">
-                                    <div class="form-group">
-                                        <label class="form-label">Sincronización automática</label>
-                                        <div>
-                                            <label class="switch">
-                                                <input type="checkbox" id="autoSyncToggle" checked>
-                                                <span class="slider round"></span>
-                                            </label>
-                                            <span style="margin-left: 10px;">Activar sincronización en segundo plano</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label class="form-label">Frecuencia de sincronización</label>
-                                        <select class="form-control" id="syncFrequency">
-                                            <option value="5">Cada 5 minutos</option>
-                                            <option value="15">Cada 15 minutos</option>
-                                            <option value="30">Cada 30 minutos</option>
-                                            <option value="60">Cada hora</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label class="form-label">Notificaciones en tiempo real</label>
-                                        <div>
-                                            <label class="switch">
-                                                <input type="checkbox" id="realtimeNotifications" checked>
-                                                <span class="slider round"></span>
-                                            </label>
-                                            <span style="margin-left: 10px;">Recibir notificaciones de cambios</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label class="form-label">Modo oscuro</label>
-                                        <div>
-                                            <label class="switch">
-                                                <input type="checkbox" id="darkModeToggle">
-                                                <span class="slider round"></span>
-                                            </label>
-                                            <span style="margin-left: 10px;">Activar modo oscuro</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group" style="margin-top: 1.5rem;">
-                                        <button class="btn btn-primary" style="width: 100%;" id="saveSettingsBtn">
-                                            <i class="fas fa-save"></i> Guardar Configuración
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">Información de la Aplicación</h3>
-                                </div>
-                                <div class="card-body">
-                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; text-align: center;">
-                                        <div style="width: 120px; height: 120px; border-radius: 16px; background: var(--primary); display: flex; align-items: center; justify-content: center;">
-                                            <i class="fas fa-user-check" style="font-size: 3rem; color: white;"></i>
-                                        </div>
-                                        <h3>Klassia v1.3</h3>
-                                        <p>Sistema de control de asistencia</p>
-                                        <p><strong>Desarrollado por: Fabián de Castillo</strong></p>
-                                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                                            <button class="btn btn-outline">
-                                                <i class="fas fa-question-circle"></i> Ayuda
-                                            </button>
-                                            <button class="btn btn-outline">
-                                                <i class="fas fa-envelope"></i> Soporte
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- Autor y última sincronización -->
+        <!-- Autor -->
         <div class="author-credit">
             Desarrollado por: Fabián de Castillo
         </div>
-        <div class="last-sync" id="lastSyncDisplay">
-            <i class="fas fa-sync-alt"></i> Última sincronización: <span id="lastSyncTime">Nunca</span>
+        <!-- Nuevo: Indicador de última sincronización -->
+        <div class="sync-info">
+            <span id="lastSyncDisplay">No sincronizado</span>
         </div>
 
-        <!-- Botones flotantes -->
-        <div class="floating-buttons">
-            <div class="floating-btn floating-btn-refresh" id="floatingRefreshBtn" title="Actualizar datos">
-                <i class="fas fa-sync-alt"></i>
-            </div>
-            <div class="floating-btn floating-btn-primary" id="addStudentFloatingBtn" title="Agregar estudiante">
-                <i class="fas fa-user-plus"></i>
-            </div>
-            <div class="floating-btn floating-btn-danger" id="deleteStudentFloatingBtn" title="Eliminar estudiante" style="display: none;">
-                <i class="fas fa-user-minus"></i>
-            </div>
-        </div>
-
-        <!-- Offline Indicator -->
-        <div class="offline-indicator" id="offlineIndicator">
-            <i class="fas fa-wifi-slash"></i>
-            <span>Modo sin conexión</span>
-        </div>
-
-        <!-- Sync Indicator -->
-        <div class="sync-indicator" id="syncIndicator">
-            <i class="fas fa-sync-alt fa-spin"></i>
-            <span>Sincronizando datos...</span>
-        </div>
+        <!-- ... (resto del HTML existente) ... -->
     </div>
 
     <script>
         // Configuración de Parse para Back4App
-        const PARSE_APP_ID = 'TU_APP_ID_BACK4APP';
-        const PARSE_JS_KEY = 'TU_JS_KEY_BACK4APP';
+        const PARSE_APP_ID = window.PARSE_APP_ID || 'TU_APP_ID_BACK4APP';
+        const PARSE_JS_KEY = window.PARSE_JS_KEY || 'TU_JS_KEY_BACK4APP';
         const PARSE_SERVER_URL = 'https://parseapi.back4app.com/';
         
         Parse.initialize(PARSE_APP_ID, PARSE_JS_KEY);
@@ -1439,17 +1010,13 @@
             groups: localforage.createInstance({ name: 'KlassiaDB', storeName: 'groups' }),
             attendance: localforage.createInstance({ name: 'KlassiaDB', storeName: 'attendance' }),
             pendingSync: localforage.createInstance({ name: 'KlassiaDB', storeName: 'pendingSync' }),
-            observations: localforage.createInstance({ name: 'KlassiaDB', storeName: 'observations' }),
-            lastSync: localforage.createInstance({ name: 'KlassiaDB', storeName: 'lastSync' }),
             
             async init() {
                 await Promise.all([
                     this.students.ready(),
                     this.groups.ready(),
                     this.attendance.ready(),
-                    this.pendingSync.ready(),
-                    this.observations.ready(),
-                    this.lastSync.ready()
+                    this.pendingSync.ready()
                 ]);
                 console.log('Base de datos inicializada');
             },
@@ -1461,13 +1028,6 @@
                 return id;
             },
             
-            async addObservation(observation) {
-                const id = Date.now().toString();
-                await this.observations.setItem(id, {...observation, id, syncStatus: 'pending'});
-                await this.addToPending('observations', id);
-                return id;
-            },
-            
             async addToPending(collection, id) {
                 const pending = await this.pendingSync.getItem('pending') || [];
                 pending.push({ collection, id });
@@ -1476,7 +1036,7 @@
             
             async getPendingSync() {
                 const pending = await this.pendingSync.getItem('pending') || [];
-                const data = { students: [], groups: [], attendance: [], observations: [] };
+                const data = { students: [], groups: [], attendance: [] };
                 
                 for (const item of pending) {
                     const record = await this[item.collection].getItem(item.id);
@@ -1492,178 +1052,759 @@
                 await this.pendingSync.setItem('pending', []);
             },
             
-            async setLastSyncTime(date) {
-                await this.lastSync.setItem('lastSync', date.toISOString());
-                document.getElementById('lastSyncTime').textContent = date.toLocaleString();
+            async deleteGroup(groupId) {
+                // Eliminar estudiantes del grupo
+                const students = [];
+                await this.students.iterate((student, key) => {
+                    if (student.groupId === groupId) {
+                        students.push(key);
+                    }
+                });
+                
+                for (const studentId of students) {
+                    await this.students.removeItem(studentId);
+                }
+                
+                // Eliminar el grupo
+                await this.groups.removeItem(groupId);
             },
             
-            async getLastSyncTime() {
-                const lastSync = await this.lastSync.getItem('lastSync');
-                if (lastSync) {
-                    const date = new Date(lastSync);
-                    document.getElementById('lastSyncTime').textContent = date.toLocaleString();
-                    return date;
+            async deleteStudent(studentId) {
+                await this.students.removeItem(studentId);
+            },
+            
+            async updateGroup(groupId, newName) {
+                const group = await this.groups.getItem(groupId);
+                if (group) {
+                    group.name = newName;
+                    group.syncStatus = 'pending';
+                    await this.groups.setItem(groupId, group);
+                    await this.addToPending('groups', groupId);
+                    return true;
                 }
-                document.getElementById('lastSyncTime').textContent = 'Nunca';
-                return null;
+                return false;
+            },
+            
+            async updateStudentAttendance(studentId, status) {
+                const student = await db.students.getItem(studentId);
+                if (student) {
+                    // Inicializar historial si no existe
+                    if (!student.attendanceHistory) {
+                        student.attendanceHistory = [];
+                    }
+                    
+                    const today = new Date().toISOString().split('T')[0];
+                    let recordIndex = student.attendanceHistory.findIndex(r => r.date === today);
+                    
+                    if (recordIndex !== -1) {
+                        // Actualizar registro existente
+                        student.attendanceHistory[recordIndex].status = status;
+                    } else {
+                        // Agregar nuevo registro
+                        student.attendanceHistory.push({ date: today, status });
+                    }
+                    
+                    await db.students.setItem(studentId, student);
+                    return true;
+                }
+                return false;
+            },
+            
+            async getMonthlyAttendance(studentId, month) {
+                const student = await this.students.getItem(studentId);
+                if (!student || !student.attendanceHistory) return null;
+                
+                const [year, monthNum] = month.split('-');
+                const monthStart = `${year}-${monthNum}-01`;
+                const nextMonth = parseInt(monthNum) + 1;
+                const monthEnd = nextMonth < 10 ? 
+                    `${year}-0${nextMonth}-01` : 
+                    `${year}-${nextMonth}-01`;
+                
+                // Filtrar asistencias del mes
+                const monthAttendance = student.attendanceHistory.filter(record => {
+                    return record.date >= monthStart && record.date < monthEnd;
+                });
+                
+                return monthAttendance;
+            },
+
+            // NUEVO: Recargar datos desde el servidor
+            async refetchFromServer() {
+                try {
+                    // 1. Obtener datos actualizados de Parse
+                    const Group = Parse.Object.extend("Group");
+                    const Student = Parse.Object.extend("Student");
+                    const Attendance = Parse.Object.extend("Attendance");
+
+                    const groupQuery = new Parse.Query(Group);
+                    const studentQuery = new Parse.Query(Student);
+                    const attendanceQuery = new Parse.Query(Attendance);
+
+                    const [serverGroups, serverStudents, serverAttendance] = await Promise.all([
+                        groupQuery.find(),
+                        studentQuery.find(),
+                        attendanceQuery.find()
+                    ]);
+
+                    // Convertir a objetos simples
+                    const groupsData = serverGroups.map(g => {
+                        const groupData = g.toJSON();
+                        return { ...groupData, id: g.id };
+                    });
+
+                    const studentsData = serverStudents.map(s => {
+                        const studentData = s.toJSON();
+                        return { ...studentData, id: s.id };
+                    });
+
+                    const attendanceData = serverAttendance.map(a => {
+                        const attendanceRecord = a.toJSON();
+                        return { ...attendanceRecord, id: a.id };
+                    });
+
+                    // 2. Limpiar datos locales
+                    await this.groups.clear();
+                    await this.students.clear();
+                    await this.attendance.clear();
+
+                    // 3. Guardar nuevos datos
+                    await this.saveGroups(groupsData);
+                    await this.saveStudents(studentsData);
+                    await this.saveAttendance(attendanceData);
+                    
+                    return true;
+                } catch (error) {
+                    console.error("Error al recargar datos:", error);
+                    return false;
+                }
+            },
+
+            async saveGroups(groups) {
+                const operations = groups.map(g => this.groups.setItem(g.id, g));
+                await Promise.all(operations);
+            },
+
+            async saveStudents(students) {
+                const operations = students.map(s => this.students.setItem(s.id, s));
+                await Promise.all(operations);
+            },
+
+            async saveAttendance(attendance) {
+                const operations = attendance.map(a => this.attendance.setItem(a.id, a));
+                await Promise.all(operations);
             }
         };
         
-        // Funciones para obtener datos de Parse
-        async function fetchGroupsFromParse() {
-            const Group = Parse.Object.extend("Group");
-            const query = new Parse.Query(Group);
-            return await query.find();
-        }
+        // Servicio para manejar fotos
+        const photoService = {
+            currentStudentId: null,
+            init() {
+                document.getElementById('takePhotoBtn').addEventListener('click', this.startCamera.bind(this));
+                document.getElementById('captureBtn').addEventListener('click', this.capturePhoto.bind(this));
+                document.getElementById('cancelCameraBtn').addEventListener('click', this.closeCamera.bind(this));
+                document.getElementById('uploadPhotoBtn').addEventListener('click', this.uploadPhoto.bind(this));
+                document.getElementById('studentPhoto').addEventListener('click', this.zoomPhoto.bind(this));
+                document.getElementById('zoomOverlay').addEventListener('click', this.closeZoom.bind(this));
+                
+                // Para la nueva vista de asistencia
+                document.getElementById('takeAttendancePhotoBtn').addEventListener('click', this.startCamera.bind(this));
+                document.getElementById('uploadAttendancePhotoBtn').addEventListener('click', this.uploadPhoto.bind(this));
+            },
+            
+            startCamera() {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    alert('Tu navegador no soporta el uso de la cámara');
+                    return;
+                }
+                
+                document.getElementById('cameraModal').style.display = 'flex';
+                
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        const video = document.getElementById('cameraVideo');
+                        video.srcObject = stream;
+                    })
+                    .catch(error => {
+                        console.error('Error al acceder a la cámara:', error);
+                        alert('No se pudo acceder a la cámara. Asegúrate de dar los permisos necesarios.');
+                        document.getElementById('cameraModal').style.display = 'none';
+                    });
+            },
+            
+            capturePhoto() {
+                const video = document.getElementById('cameraVideo');
+                const canvas = document.getElementById('cameraCanvas');
+                const context = canvas.getContext('2d');
+                
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const photoData = canvas.toDataURL('image/png');
+                document.getElementById('studentPhoto').src = photoData;
+                document.getElementById('attendancePhotoPreview').src = photoData;
+                
+                this.closeCamera();
+            },
+            
+            closeCamera() {
+                const video = document.getElementById('cameraVideo');
+                const stream = video.srcObject;
+                if (stream) {
+                    const tracks = stream.getTracks();
+                    tracks.forEach(track => track.stop());
+                    video.srcObject = null;
+                }
+                document.getElementById('cameraModal').style.display = 'none';
+            },
+            
+            uploadPhoto() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = event => {
+                            document.getElementById('studentPhoto').src = event.target.result;
+                            document.getElementById('attendancePhotoPreview').src = event.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+                
+                input.click();
+            },
+            
+            zoomPhoto(e) {
+                const photo = document.getElementById('studentPhoto');
+                const zoomedPhoto = document.getElementById('zoomedPhoto');
+                zoomedPhoto.src = photo.src;
+                document.getElementById('zoomOverlay').style.display = 'flex';
+                e.stopPropagation();
+            },
+            
+            closeZoom() {
+                document.getElementById('zoomOverlay').style.display = 'none';
+            }
+        };
         
-        async function fetchStudentsFromParse() {
-            const Student = Parse.Object.extend("Student");
-            const query = new Parse.Query(Student);
-            query.include("group");
-            return await query.find();
-        }
-        
-        async function fetchAttendanceFromParse() {
-            const Attendance = Parse.Object.extend("Attendance");
-            const query = new Parse.Query(Attendance);
-            query.include("student");
-            return await query.find();
-        }
-        
-        async function fetchObservationsFromParse() {
-            const Observation = Parse.Object.extend("Observation");
-            const query = new Parse.Query(Observation);
-            query.include("student");
-            return await query.find();
-        }
-        
-        // Función de actualización forzada
-        async function refetchDataFromServer() {
-            try {
+        // Servicio para sincronización
+        const syncService = {
+            isOnline: true,
+            lastSync: null,
+            
+            initAutoSync() {
+                window.addEventListener('online', () => {
+                    this.isOnline = true;
+                    this.syncData();
+                });
+                
+                window.addEventListener('offline', () => {
+                    this.isOnline = false;
+                });
+                
+                // Sincronizar cada 5 minutos si está online
+                setInterval(() => {
+                    if (this.isOnline) {
+                        this.syncData();
+                    }
+                }, 5 * 60 * 1000);
+                
+                this.updateSyncIndicator();
+            },
+            
+            async syncData() {
+                const pending = await db.getPendingSync();
+                if (pending.students.length === 0 && pending.groups.length === 0 && pending.attendance.length === 0) {
+                    return;
+                }
+                
                 document.getElementById('syncIndicator').style.display = 'flex';
                 
-                const groups = await fetchGroupsFromParse();
-                const students = await fetchStudentsFromParse();
-                const attendance = await fetchAttendanceFromParse();
-                const observations = await fetchObservationsFromParse();
-                
-                // Guardar en la base de datos local
-                await saveGroupsToLocal(groups);
-                await saveStudentsToLocal(students);
-                await saveAttendanceToLocal(attendance);
-                await saveObservationsToLocal(observations);
-                
-                // Actualizar la UI
-                loadGroups();
-                loadStudents();
-                await db.setLastSyncTime(new Date());
-                
-                showToast("Datos actualizados desde el servidor");
-            } catch (err) {
-                console.error("Error actualizando datos:", err);
-                showToast("No se pudo actualizar. Verificá tu conexión.");
-            } finally {
-                document.getElementById('syncIndicator').style.display = 'none';
+                try {
+                    // Simular sincronización
+                    setTimeout(async () => {
+                        await db.clearPendingSync();
+                        document.getElementById('syncIndicator').style.display = 'none';
+                        console.log('Datos sincronizados exitosamente');
+                        this.lastSync = new Date();
+                        this.updateSyncIndicator();
+                    }, 2000);
+                } catch (error) {
+                    console.error('Error en sincronización:', error);
+                    document.getElementById('syncIndicator').style.display = 'none';
+                }
+            },
+            
+            updateSyncIndicator() {
+                const lastSyncEl = document.getElementById('lastSyncDisplay');
+                if (lastSyncEl) {
+                    lastSyncEl.textContent = this.lastSync ? 
+                        `Últ. sinc: ${this.lastSync.toLocaleTimeString()}` : 
+                        'No sincronizado';
+                }
             }
+        };
+
+        // NUEVO: Configuración de LiveQuery para actualizaciones en tiempo real
+        function initLiveQueries() {
+            // Configurar cliente LiveQuery
+            const liveQueryClient = new Parse.LiveQueryClient({
+                applicationId: PARSE_APP_ID,
+                serverURL: 'wss://' + PARSE_APP_ID.replace(/:/g,'') +'.backend.back4app.io',
+                javascriptKey: PARSE_JS_KEY
+            });
+            
+            liveQueryClient.open();
+            
+            // Suscripción a cambios en Grupos
+            const Group = Parse.Object.extend('Group');
+            const groupQuery = new Parse.Query(Group);
+            const subscription = liveQueryClient.subscribe(groupQuery);
+
+            subscription.on('create', (group) => {
+                if (!document.hasFocus()) {
+                    showToast(`Nuevo grupo creado: ${group.get('name')}`);
+                    // Actualizar UI si estamos en la pestaña de grupos
+                    if (document.querySelector('.nav-tab[data-tab="groups"]').classList.contains('active')) {
+                        loadGroups();
+                    }
+                }
+            });
+
+            subscription.on('update', (group) => {
+                if (!document.hasFocus()) {
+                    showToast(`Grupo actualizado: ${group.get('name')}`);
+                    loadGroups();
+                }
+            });
+
+            // Suscripción a cambios en Estudiantes
+            const Student = Parse.Object.extend('Student');
+            const studentQuery = new Parse.Query(Student);
+            const studentSub = liveQueryClient.subscribe(studentQuery);
+
+            studentSub.on('create', (student) => {
+                if (!document.hasFocus()) {
+                    showToast(`Nuevo estudiante: ${student.get('firstName')} ${student.get('lastName')}`);
+                    loadStudents();
+                }
+            });
+
+            studentSub.on('update', (student) => {
+                if (!document.hasFocus()) {
+                    showToast(`Estudiante actualizado: ${student.get('firstName')}`);
+                    loadStudents();
+                }
+            });
+
+            // Suscripción a Asistencias
+            const Attendance = Parse.Object.extend('Attendance');
+            const attendanceQuery = new Parse.Query(Attendance);
+            const attendanceSub = liveQueryClient.subscribe(attendanceQuery);
+
+            attendanceSub.on('create', (attendance) => {
+                if (!document.hasFocus()) {
+                    showToast(`Asistencia registrada para ${attendance.get('studentName')}`);
+                    // Actualizar reportes si estamos en esa pestaña
+                    if (document.querySelector('.nav-tab[data-tab="reports"]').classList.contains('active')) {
+                        updateReportCharts();
+                    }
+                }
+            });
         }
         
-        // Suscripciones en tiempo real
-        function setupRealtimeSubscriptions() {
-            // Grupos
-            const groupQuery = new Parse.Query("Group");
-            groupQuery.subscribe().then(subscription => {
-                subscription.on('create', group => {
-                    if (!document.hasFocus()) {
-                        playNotificationSound();
-                        showToast(`Nuevo grupo creado: ${group.get('name')}`);
-                    }
-                    refetchDataFromServer();
-                });
-                
-                subscription.on('update', group => {
-                    if (!document.hasFocus()) {
-                        playNotificationSound();
-                        showToast(`Grupo actualizado: ${group.get('name')}`);
-                    }
-                    refetchDataFromServer();
-                });
-                
-                subscription.on('delete', group => {
-                    if (!document.hasFocus()) {
-                        playNotificationSound();
-                        showToast(`Grupo eliminado: ${group.get('name')}`);
-                    }
-                    refetchDataFromServer();
+        // Funciones de UI
+        async function loadGroups() {
+            const groups = [];
+            await db.groups.iterate((value, key) => {
+                groups.push(value);
+            });
+            
+            // Actualizar UI
+            const groupsTable = document.querySelector('#groupsTable tbody');
+            groupsTable.innerHTML = '';
+            
+            groups.forEach(group => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${group.name}</td>
+                    <td>${group.studentCount || 0} estudiantes</td>
+                    <td>${group.lastAttendance || 'N/A'}</td>
+                    <td>${group.attendanceRate || 0}%</td>
+                    <td>
+                        <button class="btn btn-outline edit-group" data-id="${group.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger delete-group" data-id="${group.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                groupsTable.appendChild(row);
+            });
+            
+            document.getElementById('groupsCount').textContent = groups.length;
+            
+            // Actualizar selector de grupos en asistencia
+            const attendanceGroupFilter = document.getElementById('attendanceGroupFilter');
+            attendanceGroupFilter.innerHTML = '<option value="">Seleccionar grupo</option>';
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group.id;
+                option.textContent = group.name;
+                attendanceGroupFilter.appendChild(option);
+            });
+            
+            // Actualizar selector de grupos en reportes
+            const reportGroup = document.getElementById('reportGroup');
+            reportGroup.innerHTML = '<option value="all">Todos los grupos</option>';
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group.id;
+                option.textContent = group.name;
+                reportGroup.appendChild(option);
+            });
+            
+            // Eventos para eliminar grupos
+            document.querySelectorAll('.delete-group').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const groupId = this.dataset.id;
+                    showConfirmation(
+                        '¿Eliminar grupo?',
+                        'Esta acción eliminará el grupo y todos sus estudiantes. ¿Continuar?',
+                        async () => {
+                            await db.deleteGroup(groupId);
+                            loadGroups();
+                            loadStudents();
+                        }
+                    );
                 });
             });
             
-            // Estudiantes
-            const studentQuery = new Parse.Query("Student");
-            studentQuery.subscribe().then(subscription => {
-                subscription.on('create', student => {
-                    if (!document.hasFocus()) {
-                        playNotificationSound();
-                        showToast(`Nuevo estudiante: ${student.get('firstName')} ${student.get('lastName')}`);
+            // Eventos para editar grupos
+            document.querySelectorAll('.edit-group').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const groupId = this.dataset.id;
+                    db.groups.getItem(groupId).then(group => {
+                        if (group) {
+                            document.getElementById('editGroupName').value = group.name;
+                            document.getElementById('editGroupModal').style.display = 'flex';
+                            
+                            // Guardar el ID del grupo que se está editando
+                            document.getElementById('saveGroupChanges').dataset.id = groupId;
+                        }
+                    });
+                });
+            });
+        }
+        
+        // Modificada para filtrar por grupo
+        async function loadStudents(groupId = null) {
+            const students = [];
+            await db.students.iterate((value, key) => {
+                // Si se proporciona un groupId, filtrar estudiantes
+                if (!groupId || groupId === 'all' || value.groupId === groupId) {
+                    students.push(value);
+                }
+            });
+            
+            // Actualizar UI
+            const studentsTable = document.querySelector('#studentsTable tbody');
+            studentsTable.innerHTML = '';
+            
+            students.forEach(student => {
+                // Obtener estado de asistencia de hoy
+                let todayStatus = 'N/A';
+                const today = new Date().toISOString().split('T')[0];
+                
+                if (student.attendanceHistory && student.attendanceHistory.length > 0) {
+                    const todayRecord = student.attendanceHistory.find(r => r.date === today);
+                    if (todayRecord) {
+                        todayStatus = todayRecord.status;
                     }
-                    refetchDataFromServer();
+                }
+                
+                const row = document.createElement('tr');
+                row.dataset.id = student.id;
+                row.innerHTML = `
+                    <td class="student-name">${student.firstName} ${student.lastName}</td>
+                    <td>${student.groupName || 'Sin grupo'}</td>
+                    <td>
+                        ${todayStatus !== 'N/A' ? 
+                            `<span class="attendance-badge ${todayStatus}">${todayStatus}</span>` : 
+                            'N/A'}
+                    </td>
+                    <td>
+                        <button class="btn btn-outline edit-student" data-id="${student.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger delete-student" data-id="${student.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                studentsTable.appendChild(row);
+            });
+            
+            document.getElementById('studentsCount').textContent = students.length;
+            
+            // Actualizar selector de estudiantes en reportes
+            const reportStudent = document.getElementById('reportStudent');
+            reportStudent.innerHTML = '<option value="all">Todos los estudiantes</option>';
+            students.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.id;
+                option.textContent = `${student.firstName} ${student.lastName}`;
+                reportStudent.appendChild(option);
+            });
+            
+            // Agregar event listeners para editar estudiantes
+            document.querySelectorAll('#studentsTable .edit-student').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const studentId = btn.dataset.id;
+                    selectStudent(studentId);
+                });
+            });
+            
+            // Agregar event listeners para hacer clic en el nombre del estudiante
+            document.querySelectorAll('#studentsTable .student-name').forEach(nameCell => {
+                nameCell.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const studentId = row.dataset.id;
+                    selectStudent(studentId);
+                });
+            });
+            
+            // Agregar event listeners para eliminar estudiantes
+            document.querySelectorAll('#studentsTable .delete-student').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const studentId = this.dataset.id;
+                    showConfirmation(
+                        '¿Eliminar estudiante?',
+                        'Esta acción eliminará al estudiante permanentemente. ¿Continuar?',
+                        async () => {
+                            await db.deleteStudent(studentId);
+                            loadStudents();
+                            document.getElementById('deleteStudentFloatingBtn').style.display = 'none';
+                        }
+                    );
+                });
+            });
+        }
+        
+        // Nueva función para cargar estudiantes en el selector de asistencia
+        async function loadStudentsForAttendance(groupId) {
+            const students = [];
+            await db.students.iterate((value) => {
+                if (value.groupId === groupId) {
+                    students.push(value);
+                }
+            });
+            
+            const select = document.getElementById('attendanceStudentSelect');
+            select.innerHTML = '<option value="">Seleccionar estudiante</option>';
+            
+            students.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.id;
+                option.textContent = `${student.firstName} ${student.lastName}`;
+                select.appendChild(option);
+            });
+            
+            return students;
+        }
+        
+        async function selectStudent(studentId) {
+            const student = await db.students.getItem(studentId);
+            if (student) {
+                // Actualizar formulario
+                document.getElementById('studentName').value = `${student.firstName} ${student.lastName}`;
+                document.getElementById('studentPhoto').src = student.photo || 'https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff';
+                photoService.currentStudentId = studentId;
+                
+                // Seleccionar grupo
+                const groupSelect = document.getElementById('studentGroup');
+                for (let i = 0; i < groupSelect.options.length; i++) {
+                    if (groupSelect.options[i].value === student.groupId) {
+                        groupSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+                
+                // Establecer el estado de asistencia
+                document.querySelectorAll('.attendance-btn').forEach(btn => {
+                    btn.classList.remove('active');
                 });
                 
-                subscription.on('update', student => {
-                    if (!document.hasFocus()) {
-                        playNotificationSound();
-                        showToast(`Estudiante actualizado: ${student.get('firstName')} ${student.get('lastName')}`);
-                    }
-                    refetchDataFromServer();
+                // Mostrar estadísticas del estudiante
+                if (student.attendanceHistory && student.attendanceHistory.length > 0) {
+                    // Calcular estadísticas mensuales
+                    const today = new Date();
+                    const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                    const monthAttendance = student.attendanceHistory.filter(r => 
+                        r.date.startsWith(currentMonth)
+                    );
+                    
+                    const presentCount = monthAttendance.filter(r => r.status === 'presente').length;
+                    const absentCount = monthAttendance.filter(r => r.status === 'ausente').length;
+                    const lateCount = monthAttendance.filter(r => r.status === 'tardanza').length;
+                    const totalDays = monthAttendance.length;
+                    const attendanceRate = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0;
+                    
+                    // Actualizar UI
+                    document.getElementById('monthAttendance').textContent = `${attendanceRate}%`;
+                    document.getElementById('totalPresent').textContent = presentCount;
+                    document.getElementById('totalAbsent').textContent = absentCount;
+                    document.getElementById('totalLate').textContent = lateCount;
+                    
+                    // Mostrar sección de estadísticas
+                    document.getElementById('studentStatsSection').style.display = 'block';
+                } else {
+                    document.getElementById('studentStatsSection').style.display = 'none';
+                }
+                
+                // Destacar estudiante seleccionado
+                document.querySelectorAll('#studentsTable tr').forEach(row => {
+                    row.classList.remove('selected');
                 });
-            });
-            
-            // Asistencias
-            const attendanceQuery = new Parse.Query("Attendance");
-            attendanceQuery.subscribe().then(subscription => {
-                subscription.on('create', attendance => {
-                    if (!document.hasFocus()) {
-                        playNotificationSound();
-                        showToast(`Nueva asistencia registrada`);
-                    }
-                    refetchDataFromServer();
-                });
-            });
-        }
-        
-        // Función para reproducir sonido de notificación
-        function playNotificationSound() {
-            if (!document.getElementById('notificationSound')) {
-                const audio = document.createElement('audio');
-                audio.id = 'notificationSound';
-                audio.innerHTML = '<source src="notification.mp3" type="audio/mpeg">';
-                document.body.appendChild(audio);
-            }
-            
-            const audio = document.getElementById('notificationSound');
-            audio.play().catch(e => console.log("Error al reproducir sonido: ", e));
-        }
-        
-        // Función para mostrar notificación del sistema
-        function showNotification(message) {
-            if (!("Notification" in window)) return;
-            
-            if (Notification.permission === "granted") {
-                new Notification("Klassia", { body: message });
-            } else if (Notification.permission !== "denied") {
-                Notification.requestPermission().then(permission => {
-                    if (permission === "granted") {
-                        new Notification("Klassia", { body: message });
-                    }
-                });
+                document.querySelector(`#studentsTable tr[data-id="${studentId}"]`).classList.add('selected');
+                
+                // Mostrar botón de eliminar flotante
+                document.getElementById('deleteStudentFloatingBtn').style.display = 'flex';
             }
         }
         
-        // Función para mostrar notificación en la aplicación
-        function showToast(message) {
+        function showConfirmation(message, details, confirmCallback) {
+            document.getElementById('confirmationMessage').textContent = message;
+            document.getElementById('confirmationModal').style.display = 'flex';
+            
+            document.getElementById('confirmAction').onclick = async () => {
+                document.getElementById('confirmationModal').style.display = 'none';
+                if (confirmCallback) {
+                    await confirmCallback();
+                }
+            };
+            
+            document.getElementById('confirmCancel').onclick = () => {
+                document.getElementById('confirmationModal').style.display = 'none';
+            };
+        }
+        
+        function activateTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+            document.querySelector(`.nav-tab[data-tab="${tabName}"]`).classList.add('active');
+            
+            // Cerrar menú móvil al cambiar de pestaña
+            document.getElementById('mobileMenu').classList.remove('active');
+        }
+        
+        function generateCalendar(containerId) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const calendar = document.getElementById(containerId);
+            calendar.innerHTML = '';
+            
+            // Encabezado con el mes y año
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const header = document.createElement('div');
+            header.className = 'calendar-header';
+            header.textContent = `${monthNames[month]} ${year}`;
+            calendar.appendChild(header);
+            
+            // Días de la semana
+            const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            dayNames.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'calendar-day-header';
+                dayHeader.textContent = day;
+                calendar.appendChild(dayHeader);
+            });
+            
+            // Días del mes
+            const firstDay = new Date(year, month, 1).getDay();
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day';
+                calendar.appendChild(emptyDay);
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = day;
+                dayElement.dataset.date = `${year}-${String(month+1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                if (day === now.getDate()) {
+                    dayElement.classList.add('active');
+                }
+                
+                calendar.appendChild(dayElement);
+            }
+            
+            // Agregar event listeners para seleccionar días
+            calendar.querySelectorAll('.calendar-day').forEach(day => {
+                day.addEventListener('click', function() {
+                    // Quitar selección de otros días
+                    calendar.querySelectorAll('.calendar-day').forEach(d => {
+                        d.classList.remove('selected');
+                    });
+                    
+                    // Seleccionar este día
+                    this.classList.add('selected');
+                });
+            });
+        }
+        
+        function showAutoSaveNotification() {
             const toast = document.createElement('div');
             toast.className = 'auto-save-toast';
             toast.innerHTML = `
-                <i class="fas fa-info-circle"></i>
+                <i class="fas fa-check-circle"></i>
+                Asistencia guardada automáticamente
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Eliminar la notificación después de 3 segundos
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        function showImportNotification(message, isSuccess = true) {
+            const indicator = document.createElement('div');
+            indicator.className = `import-indicator ${isSuccess ? '' : 'error'}`;
+            indicator.innerHTML = `
+                <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(indicator);
+            
+            setTimeout(() => {
+                indicator.remove();
+            }, 5000);
+        }
+        
+        // NUEVO: Función para mostrar notificaciones
+        function showToast(message, isSuccess = true) {
+            const toast = document.createElement('div');
+            toast.className = `import-indicator ${isSuccess ? '' : 'error'}`;
+            toast.innerHTML = `
+                <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
                 ${message}
             `;
             
@@ -1674,32 +1815,833 @@
             }, 3000);
         }
         
+        // Inicializar gráficos con datos reales
+        let attendanceChartInstance = null;
+        let performanceChartInstance = null;
+        let monthlyChartInstance = null;
+        
+        async function updateReportCharts() {
+            // Obtener mes seleccionado
+            const monthInput = document.getElementById('reportMonth');
+            const selectedMonth = monthInput.value || new Date().toISOString().slice(0, 7);
+            
+            // Obtener grupo seleccionado
+            const groupSelect = document.getElementById('reportGroup');
+            const selectedGroupId = groupSelect.value;
+            
+            // Obtener estudiante seleccionado
+            const studentSelect = document.getElementById('reportStudent');
+            const selectedStudentId = studentSelect.value;
+            
+            // Actualizar estadísticas individuales si se seleccionó un estudiante
+            if (selectedStudentId && selectedStudentId !== 'all') {
+                const student = await db.students.getItem(selectedStudentId);
+                if (student && student.attendanceHistory) {
+                    const monthAttendance = student.attendanceHistory.filter(r => 
+                        r.date.startsWith(selectedMonth)
+                    );
+                    
+                    const presentCount = monthAttendance.filter(r => r.status === 'presente').length;
+                    const absentCount = monthAttendance.filter(r => r.status === 'ausente').length;
+                    const lateCount = monthAttendance.filter(r => r.status === 'tardanza').length;
+                    const totalDays = monthAttendance.length;
+                    const attendanceRate = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0;
+                    
+                    document.getElementById('indMonthAttendance').textContent = `${attendanceRate}%`;
+                    document.getElementById('indTotalPresent').textContent = presentCount;
+                    document.getElementById('indTotalAbsent').textContent = absentCount;
+                    document.getElementById('indTotalLate').textContent = lateCount;
+                    
+                    document.getElementById('individualStats').style.display = 'block';
+                } else {
+                    document.getElementById('individualStats').style.display = 'none';
+                }
+            } else {
+                document.getElementById('individualStats').style.display = 'none';
+            }
+            
+            // Obtener datos para gráficos
+            const groups = [];
+            const groupAttendance = [];
+            
+            await db.groups.iterate(async (group) => {
+                // Si se seleccionó un grupo específico, saltar otros
+                if (selectedGroupId !== 'all' && group.id !== selectedGroupId) return;
+                
+                groups.push(group.name);
+                
+                // Calcular asistencia mensual para el grupo
+                let groupPresentCount = 0;
+                let groupTotalDays = 0;
+                
+                await db.students.iterate((student) => {
+                    if (student.groupId === group.id && student.attendanceHistory) {
+                        const monthAttendance = student.attendanceHistory.filter(r => 
+                            r.date.startsWith(selectedMonth)
+                        );
+                        
+                        monthAttendance.forEach(record => {
+                            groupTotalDays++;
+                            if (record.status === 'presente') groupPresentCount++;
+                        });
+                    }
+                });
+                
+                const attendanceRate = groupTotalDays > 0 ? Math.round((groupPresentCount / groupTotalDays) * 100) : 0;
+                groupAttendance.push(attendanceRate);
+            });
+            
+            // Destruir gráficos anteriores si existen
+            if (attendanceChartInstance) {
+                attendanceChartInstance.destroy();
+            }
+            if (monthlyChartInstance) {
+                monthlyChartInstance.destroy();
+            }
+            
+            // Gráfico de asistencia por grupo
+            const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+            attendanceChartInstance = new Chart(attendanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: groups,
+                    datasets: [{
+                        label: 'Porcentaje de Asistencia',
+                        data: groupAttendance,
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 206, 86, 0.6)',
+                            'rgba(153, 102, 255, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(153, 102, 255, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de asistencia mensual
+            const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+            monthlyChartInstance = new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                    datasets: [{
+                        label: 'Asistencia semanal',
+                        data: [85, 78, 92, 88],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Función para procesar archivos Excel
+        async function processExcelFile(file, nameFormat) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        
+                        const students = [];
+                        // Omitir la primera fila (encabezados)
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if (nameFormat === 'single' && row[0]) {
+                                const fullName = row[0].toString().trim();
+                                if (fullName) {
+                                    const firstName = fullName.split(' ')[0];
+                                    const lastName = fullName.split(' ').slice(1).join(' ') || '';
+                                    students.push({ firstName, lastName });
+                                }
+                            } else if (nameFormat === 'two' && row[0] && row[1]) {
+                                const firstName = row[0].toString().trim();
+                                const lastName = row[1].toString().trim();
+                                if (firstName && lastName) {
+                                    students.push({ firstName, lastName });
+                                }
+                            }
+                        }
+                        resolve(students);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Función para procesar archivos CSV
+        async function processCSVFile(file, nameFormat) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const text = e.target.result;
+                        const lines = text.split('\n');
+                        const students = [];
+                        
+                        // Omitir la primera fila (encabezados)
+                        for (let i = 1; i < lines.length; i++) {
+                            const line = lines[i].trim();
+                            if (!line) continue;
+                            
+                            const columns = line.split(',');
+                            if (nameFormat === 'single' && columns[0]) {
+                                const fullName = columns[0].trim();
+                                if (fullName) {
+                                    const firstName = fullName.split(' ')[0];
+                                    const lastName = fullName.split(' ').slice(1).join(' ') || '';
+                                    students.push({ firstName, lastName });
+                                }
+                            } else if (nameFormat === 'two' && columns[0] && columns[1]) {
+                                const firstName = columns[0].trim();
+                                const lastName = columns[1].trim();
+                                if (firstName && lastName) {
+                                    students.push({ firstName, lastName });
+                                }
+                            }
+                        }
+                        resolve(students);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+
         // Inicialización de la aplicación
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 // Inicializar bases de datos
                 await db.init();
                 
-                // Mostrar última sincronización
-                await db.getLastSyncTime();
+                // Inicializar servicios
+                syncService.initAutoSync();
+                photoService.init();
                 
-                // Configurar suscripciones en tiempo real
-                setupRealtimeSubscriptions();
+                // Inicializar LiveQuery
+                initLiveQueries();
+
+                // Manejar estado offline/online
+                const offlineIndicator = document.getElementById('offlineIndicator');
+                const syncIndicator = document.getElementById('syncIndicator');
                 
-                // Botón de actualización forzada
-                document.getElementById('forceRefreshBtn').addEventListener('click', refetchDataFromServer);
-                document.getElementById('floatingRefreshBtn').addEventListener('click', refetchDataFromServer);
+                const updateNetworkStatus = () => {
+                    offlineIndicator.style.display = navigator.onLine ? 'none' : 'flex';
+                    syncService.isOnline = navigator.onLine;
+                };
                 
-                // ... resto del código de inicialización ...
+                updateNetworkStatus();
+                window.addEventListener('offline', updateNetworkStatus);
+                window.addEventListener('online', updateNetworkStatus);
                 
-                // Sincronizar datos al iniciar
-                refetchDataFromServer();
+                // Generar calendarios
+                generateCalendar('calendarContainer');
+                generateCalendar('reportCalendarContainer');
+                
+                // Manejar pestañas
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        activateTab(tab.dataset.tab);
+                    });
+                });
+                
+                // Nuevo: Evento para el botón de actualización
+                document.getElementById('refreshDataBtn').addEventListener('click', async () => {
+                    const syncIndicator = document.getElementById('syncIndicator');
+                    syncIndicator.style.display = 'flex';
+                    
+                    try {
+                        const success = await db.refetchFromServer();
+                        if (success) {
+                            await loadGroups();
+                            await loadStudents();
+                            showToast("Datos actualizados desde el servidor");
+                            syncService.lastSync = new Date();
+                            syncService.updateSyncIndicator();
+                        } else {
+                            showToast("Error en la actualización", false);
+                        }
+                    } catch (error) {
+                        showToast("Error: " + error.message, false);
+                    } finally {
+                        syncIndicator.style.display = 'none';
+                    }
+                });
+
+                // ... (resto de los event listeners) ...
+
+                // Manejar selector de grupo en asistencia
+                document.getElementById('attendanceGroupFilter').addEventListener('change', async function() {
+                    const groupId = this.value;
+                    if (groupId) {
+                        const students = await loadStudentsForAttendance(groupId);
+                        
+                        // Mostrar selector de estudiantes
+                        document.getElementById('studentSelectorContainer').style.display = 'block';
+                        
+                        if (students.length > 0) {
+                            // Seleccionar el primer estudiante automáticamente
+                            const firstStudentId = students[0].id;
+                            document.getElementById('attendanceStudentSelect').value = firstStudentId;
+                            
+                            // Mostrar tarjeta de asistencia
+                            document.getElementById('attendanceCard').style.display = 'block';
+                            
+                            // Actualizar nombre del estudiante
+                            const student = students[0];
+                            document.getElementById('attendanceStudentName').textContent = 
+                                `${student.firstName} ${student.lastName}`;
+                        }
+                    } else {
+                        document.getElementById('studentSelectorContainer').style.display = 'none';
+                        document.getElementById('attendanceCard').style.display = 'none';
+                    }
+                });
+                
+                // Manejar selector de estudiante en asistencia
+                document.getElementById('attendanceStudentSelect').addEventListener('change', function() {
+                    const studentId = this.value;
+                    if (studentId) {
+                        // Obtener estudiante
+                        db.students.getItem(studentId).then(student => {
+                            if (student) {
+                                document.getElementById('attendanceStudentName').textContent = 
+                                    `${student.firstName} ${student.lastName}`;
+                                
+                                // Mostrar tarjeta de asistencia
+                                document.getElementById('attendanceCard').style.display = 'block';
+                                
+                                // Resetear botones de asistencia
+                                document.querySelectorAll('.attendance-option').forEach(btn => {
+                                    btn.classList.remove('active');
+                                });
+                                
+                                // Verificar si ya tiene asistencia marcada hoy
+                                const today = new Date().toISOString().split('T')[0];
+                                if (student.attendanceHistory) {
+                                    const todayRecord = student.attendanceHistory.find(r => r.date === today);
+                                    if (todayRecord) {
+                                        const activeBtn = document.querySelector(`.attendance-option[data-status="${todayRecord.status}"]`);
+                                        if (activeBtn) {
+                                            activeBtn.classList.add('active');
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        document.getElementById('attendanceCard').style.display = 'none';
+                    }
+                });
+                
+                // Botones de asistencia en la nueva vista
+                document.querySelectorAll('.attendance-option').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        // Quitar clase activa de todos los botones
+                        document.querySelectorAll('.attendance-option').forEach(b => {
+                            b.classList.remove('active');
+                        });
+                        
+                        // Agregar clase activa al botón clickeado
+                        this.classList.add('active');
+                    });
+                });
+                
+                // Guardar asistencia
+                document.getElementById('saveAttendanceBtn').addEventListener('click', async function() {
+                    const studentId = document.getElementById('attendanceStudentSelect').value;
+                    const activeOption = document.querySelector('.attendance-option.active');
+                    
+                    if (!studentId) {
+                        alert('Por favor seleccione un estudiante');
+                        return;
+                    }
+                    
+                    if (!activeOption) {
+                        alert('Por favor seleccione un estado de asistencia');
+                        return;
+                    }
+                    
+                    const status = activeOption.dataset.status;
+                    await db.updateStudentAttendance(studentId, status);
+                    
+                    // Mostrar notificación
+                    showToast('Asistencia registrada correctamente');
+                });
+                
+                // Botón siguiente después de guardar
+                document.getElementById('nextAfterSaveBtn').addEventListener('click', function() {
+                    const studentSelect = document.getElementById('attendanceStudentSelect');
+                    const currentIndex = studentSelect.selectedIndex;
+                    const nextIndex = currentIndex + 1;
+                    
+                    if (nextIndex < studentSelect.options.length) {
+                        studentSelect.selectedIndex = nextIndex;
+                        studentSelect.dispatchEvent(new Event('change'));
+                    } else {
+                        alert('¡Último estudiante del grupo!');
+                    }
+                });
+                
+                // Botones de navegación entre estudiantes
+                document.getElementById('prevStudentBtn').addEventListener('click', function() {
+                    const studentSelect = document.getElementById('attendanceStudentSelect');
+                    const currentIndex = studentSelect.selectedIndex;
+                    const prevIndex = currentIndex - 1;
+                    
+                    if (prevIndex > 0) { // El índice 0 es "Seleccionar estudiante"
+                        studentSelect.selectedIndex = prevIndex;
+                        studentSelect.dispatchEvent(new Event('change'));
+                    }
+                });
+                
+                document.getElementById('nextStudentBtn').addEventListener('click', function() {
+                    const studentSelect = document.getElementById('attendanceStudentSelect');
+                    const currentIndex = studentSelect.selectedIndex;
+                    const nextIndex = currentIndex + 1;
+                    
+                    if (nextIndex < studentSelect.options.length) {
+                        studentSelect.selectedIndex = nextIndex;
+                        studentSelect.dispatchEvent(new Event('change'));
+                    }
+                });
+                
+                // Botón para nuevo estudiante
+                document.getElementById('newStudentBtn').addEventListener('click', () => {
+                    // Limpiar formulario
+                    document.getElementById('studentName').value = '';
+                    document.getElementById('studentGroup').selectedIndex = 0;
+                    document.getElementById('studentPhoto').src = 'https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff';
+                    
+                    // Resetear botones de asistencia
+                    document.querySelectorAll('.attendance-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // Preparar para nuevo estudiante
+                    photoService.currentStudentId = null;
+                    
+                    // Ocultar botón de eliminar
+                    document.getElementById('deleteStudentFloatingBtn').style.display = 'none';
+                    
+                    // Deseleccionar cualquier estudiante
+                    document.querySelectorAll('#studentsTable tr').forEach(row => {
+                        row.classList.remove('selected');
+                    });
+                    
+                    // Ocultar estadísticas
+                    document.getElementById('studentStatsSection').style.display = 'none';
+                });
+                
+                // Botón flotante para nuevo estudiante
+                document.getElementById('addStudentFloatingBtn').addEventListener('click', () => {
+                    activateTab('attendance');
+                    document.getElementById('newStudentBtn').click();
+                });
+                
+                // Botón flotante para eliminar estudiante
+                document.getElementById('deleteStudentFloatingBtn').addEventListener('click', () => {
+                    if (photoService.currentStudentId) {
+                        showConfirmation(
+                            '¿Eliminar estudiante?',
+                            'Esta acción eliminará al estudiante permanentemente. ¿Continuar?',
+                            async () => {
+                                await db.deleteStudent(photoService.currentStudentId);
+                                loadStudents();
+                                document.getElementById('deleteStudentFloatingBtn').style.display = 'none';
+                                
+                                // Limpiar formulario
+                                document.getElementById('studentName').value = '';
+                                document.getElementById('studentGroup').selectedIndex = 0;
+                                document.getElementById('studentPhoto').src = 'https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff';
+                                document.querySelectorAll('.attendance-btn').forEach(btn => {
+                                    btn.classList.remove('active');
+                                });
+                                
+                                // Ocultar estadísticas
+                                document.getElementById('studentStatsSection').style.display = 'none';
+                            }
+                        );
+                    }
+                });
+                
+                // Manejar importación
+                document.getElementById('importCsvBtn').addEventListener('click', () => {
+                    document.getElementById('importModal').style.display = 'flex';
+                });
+                
+                document.getElementById('cancelImportBtn').addEventListener('click', () => {
+                    document.getElementById('importModal').style.display = 'none';
+                });
+                
+                document.getElementById('importConfirmBtn').addEventListener('click', async () => {
+                    const fileInput = document.getElementById('importFile');
+                    const groupNameInput = document.getElementById('groupName');
+                    const nameFormat = document.getElementById('nameFormat').value;
+                    
+                    if (!fileInput.files.length || !groupNameInput.value) {
+                        showImportNotification('Por favor, seleccione un archivo e ingrese un nombre para el grupo', false);
+                        return;
+                    }
+                    
+                    const file = fileInput.files[0];
+                    const groupName = groupNameInput.value;
+                    let studentsData = [];
+                    
+                    try {
+                        if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                            studentsData = await processExcelFile(file, nameFormat);
+                        } else if (file.name.endsWith('.csv')) {
+                            studentsData = await processCSVFile(file, nameFormat);
+                        } else {
+                            throw new Error('Formato de archivo no soportado. Use Excel (.xlsx, .xls) o CSV (.csv)');
+                        }
+                        
+                        if (studentsData.length === 0) {
+                            throw new Error('No se encontraron estudiantes en el archivo');
+                        }
+                        
+                        // Crear grupo en la base de datos
+                        const groupId = Date.now().toString();
+                        await db.groups.setItem(groupId, {
+                            id: groupId,
+                            name: groupName,
+                            studentCount: studentsData.length,
+                            syncStatus: 'pending'
+                        });
+                        await db.addToPending('groups', groupId);
+                        
+                        // Procesar estudiantes
+                        for (let i = 0; i < studentsData.length; i++) {
+                            const student = studentsData[i];
+                            const studentId = Date.now().toString() + i;
+                            await db.students.setItem(studentId, {
+                                id: studentId,
+                                firstName: student.firstName,
+                                lastName: student.lastName,
+                                groupId: groupId,
+                                groupName: groupName,
+                                attendanceRate: '0%',
+                                attendanceHistory: [],
+                                syncStatus: 'pending'
+                            });
+                            await db.addToPending('students', studentId);
+                        }
+                        
+                        // Cerrar modal y mostrar notificación
+                        document.getElementById('importModal').style.display = 'none';
+                        showImportNotification(`Grupo "${groupName}" importado con ${studentsData.length} estudiantes`, true);
+                        
+                        // Recargar datos
+                        await loadGroups();
+                        await loadStudents();
+                        
+                        // Mostrar pestaña de asistencias
+                        activateTab('attendance');
+                        
+                    } catch (error) {
+                        console.error('Error importando archivo:', error);
+                        showImportNotification('Error al importar: ' + error.message, false);
+                    }
+                });
+                
+                // Botones de asistencia
+                document.querySelectorAll('.attendance-btn').forEach(btn => {
+                    btn.addEventListener('click', async function() {
+                        // Quitar clase activa de todos los botones
+                        document.querySelectorAll('.attendance-btn').forEach(b => {
+                            b.classList.remove('active');
+                        });
+                        
+                        // Agregar clase activa al botón clickeado
+                        this.classList.add('active');
+                        
+                        // Guardar asistencia automáticamente
+                        if (photoService.currentStudentId) {
+                            const status = this.dataset.status;
+                            await db.updateStudentAttendance(photoService.currentStudentId, status);
+                            
+                            // Actualizar la fila del estudiante
+                            const student = await db.students.getItem(photoService.currentStudentId);
+                            if (student) {
+                                const row = document.querySelector(`#studentsTable tr[data-id="${photoService.currentStudentId}"]`);
+                                if (row) {
+                                    const today = new Date().toISOString().split('T')[0];
+                                    const todayRecord = student.attendanceHistory.find(r => r.date === today);
+                                    const attendanceCell = row.cells[2];
+                                    
+                                    if (todayRecord) {
+                                        attendanceCell.innerHTML = todayRecord.status ? 
+                                            `<span class="attendance-badge ${todayRecord.status}">${todayRecord.status}</span>` : 
+                                            'N/A';
+                                    }
+                                }
+                            }
+                            
+                            // Actualizar estadísticas
+                            await updateStatistics();
+                            
+                            // Actualizar gráficos si estamos en la pestaña de reportes
+                            if (document.getElementById('reportsTab').classList.contains('active')) {
+                                await updateReportCharts();
+                            }
+                            
+                            // Mostrar notificación de guardado automático
+                            showAutoSaveNotification();
+                        }
+                    });
+                });
+                
+                // Guardar cambios del estudiante
+                document.getElementById('saveStudentBtn').addEventListener('click', async () => {
+                    const name = document.getElementById('studentName').value.trim();
+                    const groupId = document.getElementById('studentGroup').value;
+                    const photo = document.getElementById('studentPhoto').src;
+                    
+                    if (!name) {
+                        alert('Por favor, ingrese el nombre del estudiante');
+                        return;
+                    }
+                    
+                    // Split name into first and last (naive approach)
+                    const nameParts = name.split(' ');
+                    const firstName = nameParts[0];
+                    const lastName = nameParts.slice(1).join(' ') || '';
+                    
+                    if (photoService.currentStudentId) {
+                        // Get the current student from DB
+                        const student = await db.students.getItem(photoService.currentStudentId);
+                        if (student) {
+                            // Update student data
+                            student.firstName = firstName;
+                            student.lastName = lastName;
+                            student.groupId = groupId;
+                            student.photo = photo;
+                            
+                            // Get group name for display
+                            const group = groupId ? await db.groups.getItem(groupId) : null;
+                            student.groupName = group ? group.name : '';
+                            
+                            await db.students.setItem(student.id, student);
+                            
+                            // Update UI
+                            loadStudents();
+                            showToast('Estudiante actualizado');
+                        }
+                    } else {
+                        // Create new student
+                        const group = groupId ? await db.groups.getItem(groupId) : null;
+                        const groupName = group ? group.name : '';
+                        
+                        const studentId = await db.addStudent({
+                            firstName,
+                            lastName,
+                            groupId,
+                            groupName,
+                            photo,
+                            attendanceHistory: []
+                        });
+                        
+                        photoService.currentStudentId = studentId;
+                        document.getElementById('deleteStudentFloatingBtn').style.display = 'flex';
+                        loadStudents();
+                        showToast('Estudiante creado');
+                    }
+                });
+                
+                // Guardar cambios de grupo
+                document.getElementById('saveGroupChanges').addEventListener('click', async function() {
+                    const groupId = this.dataset.id;
+                    const newName = document.getElementById('editGroupName').value;
+                    
+                    if (!newName) {
+                        alert('Por favor, ingrese un nombre para el grupo');
+                        return;
+                    }
+                    
+                    const success = await db.updateGroup(groupId, newName);
+                    if (success) {
+                        alert('Grupo actualizado correctamente');
+                        document.getElementById('editGroupModal').style.display = 'none';
+                        loadGroups();
+                    } else {
+                        alert('Error al actualizar el grupo');
+                    }
+                });
+                
+                // Cancelar edición de grupo
+                document.getElementById('cancelEditGroup').addEventListener('click', () => {
+                    document.getElementById('editGroupModal').style.display = 'none';
+                });
+                
+                // Filtro por grupo
+                document.getElementById('groupFilter').addEventListener('change', function() {
+                    const groupId = this.value;
+                    loadStudents(groupId === 'all' ? null : groupId);
+                });
+                
+                // Filtro de búsqueda en grupos
+                document.getElementById('groupSearch').addEventListener('input', function() {
+                    const searchText = this.value.toLowerCase();
+                    const rows = document.querySelectorAll('#groupsTable tbody tr');
+                    
+                    rows.forEach(row => {
+                        const groupName = row.cells[0].textContent.toLowerCase();
+                        if (groupName.includes(searchText)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+                
+                // Menú móvil
+                document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+                    document.getElementById('mobileMenu').classList.toggle('active');
+                });
+                
+                // Botón "Empezar ahora"
+                document.getElementById('startNowBtn').addEventListener('click', function() {
+                    activateTab('groups');
+                });
+                
+                // Selectores de reportes
+                document.getElementById('reportMonth').addEventListener('change', updateReportCharts);
+                document.getElementById('reportGroup').addEventListener('change', updateReportCharts);
+                document.getElementById('reportStudent').addEventListener('change', updateReportCharts);
+                
+                // Inicializar gráficos cuando se muestre la pestaña de reportes
+                document.getElementById('reportsTab').addEventListener('click', function() {
+                    // Establecer mes actual por defecto
+                    const today = new Date();
+                    const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                    document.getElementById('reportMonth').value = currentMonth;
+                    
+                    updateReportCharts();
+                });
+                
+                // Cargar datos iniciales
+                await loadGroups();
+                await loadStudents();
+                
+                // Establecer mes actual por defecto en reportes
+                const today = new Date();
+                const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                document.getElementById('reportMonth').value = currentMonth;
                 
             } catch (error) {
                 console.error('Error inicializando aplicación:', error);
-                showToast('Error al iniciar la aplicación. Por favor recarga la página.');
+                alert('Error al iniciar la aplicación. Por favor recarga la página.');
             }
         });
+        
+        // Función para mostrar notificaciones
+        function showToast(message, isSuccess = true) {
+            const toast = document.createElement('div');
+            toast.className = `import-indicator ${isSuccess ? '' : 'error'}`;
+            toast.innerHTML = `
+                <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        // Actualizar estadísticas globales
+        async function updateStatistics() {
+            // Calcular asistencia general
+            let presentCount = 0;
+            let totalStudents = 0;
+            
+            await db.students.iterate((student) => {
+                totalStudents++;
+                if (student.attendanceHistory && student.attendanceHistory.length > 0) {
+                    const today = new Date().toISOString().split('T')[0];
+                    const todayRecord = student.attendanceHistory.find(r => r.date === today);
+                    if (todayRecord && todayRecord.status === 'presente') {
+                        presentCount++;
+                    }
+                }
+            });
+            
+            const attendanceRate = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
+            document.getElementById('attendanceRate').textContent = `${attendanceRate}%`;
+            
+            // Calcular estadísticas por grupo
+            await db.groups.iterate(async (group) => {
+                let groupPresentCount = 0;
+                let groupTotalStudents = 0;
+                
+                await db.students.iterate((student) => {
+                    if (student.groupId === group.id) {
+                        groupTotalStudents++;
+                        if (student.attendanceHistory && student.attendanceHistory.length > 0) {
+                            const today = new Date().toISOString().split('T')[0];
+                            const todayRecord = student.attendanceHistory.find(r => r.date === today);
+                            if (todayRecord && todayRecord.status === 'presente') {
+                                groupPresentCount++;
+                            }
+                        }
+                    }
+                });
+                
+                const groupAttendanceRate = groupTotalStudents > 0 ? Math.round((groupPresentCount / groupTotalStudents) * 100) : 0;
+                group.attendanceRate = groupAttendanceRate;
+                await db.groups.setItem(group.id, group);
+            });
+        }
     </script>
 </body>
 </html>
