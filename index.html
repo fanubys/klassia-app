@@ -97,6 +97,45 @@
             background-color: rgba(255, 255, 255, 0.15);
         }
 
+        /* Mobile menu */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .mobile-menu {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: white;
+            z-index: 200;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+            flex-direction: column;
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        .mobile-menu .nav-tab {
+            border-radius: 0;
+            text-align: center;
+            padding: 1rem;
+            color: var(--dark);
+            background: white;
+        }
+
+        .mobile-menu .nav-tab.active {
+            background-color: var(--light);
+            color: var(--primary);
+        }
+
         /* Main Content */
         .main-content {
             flex: 1;
@@ -120,6 +159,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .card-title {
@@ -497,6 +538,10 @@
                 display: none;
             }
             
+            .mobile-menu-btn {
+                display: block;
+            }
+            
             .main-content {
                 padding: 1rem;
             }
@@ -522,6 +567,17 @@
                 width: 50px;
                 height: 50px;
                 font-size: 1.2rem;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .actions {
+                width: 100%;
+                display: flex;
+                justify-content: flex-end;
             }
         }
         
@@ -706,6 +762,43 @@
             background-color: #fbbf24;
             color: white;
         }
+        
+        /* Stats card */
+        .stats-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+        
+        .stats-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+        
+        .stats-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        /* Student stats */
+        .student-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        /* Date selector */
+        .date-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
@@ -716,13 +809,25 @@
                 <i class="fas fa-user-check"></i>
                 <span>Klassia</span>
             </div>
-            <nav class="nav-tabs">
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav class="nav-tabs" id="desktopTabs">
                 <div class="nav-tab active" data-tab="dashboard">Dashboard</div>
                 <div class="nav-tab" data-tab="groups">Grupos</div>
                 <div class="nav-tab" data-tab="attendance">Asistencias</div>
                 <div class="nav-tab" data-tab="reports">Reportes</div>
                 <div class="nav-tab" data-tab="settings">Configuración</div>
             </nav>
+            
+            <!-- Mobile Menu -->
+            <div class="mobile-menu" id="mobileMenu">
+                <div class="nav-tab active" data-tab="dashboard">Dashboard</div>
+                <div class="nav-tab" data-tab="groups">Grupos</div>
+                <div class="nav-tab" data-tab="attendance">Asistencias</div>
+                <div class="nav-tab" data-tab="reports">Reportes</div>
+                <div class="nav-tab" data-tab="settings">Configuración</div>
+            </div>
         </header>
 
         <!-- Main Content -->
@@ -914,6 +1019,29 @@
                                             <i class="fas fa-save"></i> Guardar Cambios
                                         </button>
                                     </div>
+                                    
+                                    <!-- Student Statistics -->
+                                    <div id="studentStatsSection" style="display: none; margin-top: 1.5rem;">
+                                        <h3>Estadísticas del Estudiante</h3>
+                                        <div class="student-stats">
+                                            <div class="stats-card">
+                                                <div class="stats-value" id="monthAttendance">0%</div>
+                                                <div class="stats-label">Asistencia este mes</div>
+                                            </div>
+                                            <div class="stats-card">
+                                                <div class="stats-value" id="totalPresent">0</div>
+                                                <div class="stats-label">Días presentes</div>
+                                            </div>
+                                            <div class="stats-card">
+                                                <div class="stats-value" id="totalAbsent">0</div>
+                                                <div class="stats-label">Días ausentes</div>
+                                            </div>
+                                            <div class="stats-card">
+                                                <div class="stats-value" id="totalLate">0</div>
+                                                <div class="stats-label">Tardanzas</div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -934,6 +1062,28 @@
                         </div>
                     </div>
                     <div class="card-body">
+                        <!-- Date and Group Selector -->
+                        <div class="date-selector">
+                            <div class="form-group" style="flex: 1;">
+                                <label class="form-label">Mes y Año</label>
+                                <input type="month" class="form-control" id="reportMonth" value="">
+                            </div>
+                            
+                            <div class="form-group" style="flex: 1;">
+                                <label class="form-label">Grupo</label>
+                                <select class="form-control" id="reportGroup">
+                                    <option value="all">Todos los grupos</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" style="flex: 1;">
+                                <label class="form-label">Estudiante</label>
+                                <select class="form-control" id="reportStudent">
+                                    <option value="all">Todos los estudiantes</option>
+                                </select>
+                            </div>
+                        </div>
+                        
                         <div class="dashboard-grid">
                             <!-- Attendance Chart -->
                             <div class="card">
@@ -947,15 +1097,38 @@
                                 </div>
                             </div>
                             
-                            <!-- Student Performance -->
+                            <!-- Monthly Attendance -->
                             <div class="card">
                                 <div class="card-header">
-                                    <h3 class="card-title">Rendimiento de Estudiantes</h3>
+                                    <h3 class="card-title">Asistencia Mensual</h3>
                                 </div>
                                 <div class="card-body">
                                     <div class="chart-container">
-                                        <canvas id="performanceChart"></canvas>
+                                        <canvas id="monthlyChart"></canvas>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Individual Statistics -->
+                        <div id="individualStats" style="display: none; margin-top: 1.5rem;">
+                            <h3>Estadísticas Individuales</h3>
+                            <div class="student-stats">
+                                <div class="stats-card">
+                                    <div class="stats-value" id="indMonthAttendance">0%</div>
+                                    <div class="stats-label">Asistencia este mes</div>
+                                </div>
+                                <div class="stats-card">
+                                    <div class="stats-value" id="indTotalPresent">0</div>
+                                    <div class="stats-label">Días presentes</div>
+                                </div>
+                                <div class="stats-card">
+                                    <div class="stats-value" id="indTotalAbsent">0</div>
+                                    <div class="stats-label">Días ausentes</div>
+                                </div>
+                                <div class="stats-card">
+                                    <div class="stats-value" id="indTotalLate">0</div>
+                                    <div class="stats-label">Tardanzas</div>
                                 </div>
                             </div>
                         </div>
@@ -1268,12 +1441,45 @@
             async updateStudentAttendance(studentId, status) {
                 const student = await db.students.getItem(studentId);
                 if (student) {
-                    student.lastAttendanceStatus = status;
-                    student.lastAttendanceDate = new Date().toISOString().split('T')[0];
+                    // Inicializar historial si no existe
+                    if (!student.attendanceHistory) {
+                        student.attendanceHistory = [];
+                    }
+                    
+                    const today = new Date().toISOString().split('T')[0];
+                    let recordIndex = student.attendanceHistory.findIndex(r => r.date === today);
+                    
+                    if (recordIndex !== -1) {
+                        // Actualizar registro existente
+                        student.attendanceHistory[recordIndex].status = status;
+                    } else {
+                        // Agregar nuevo registro
+                        student.attendanceHistory.push({ date: today, status });
+                    }
+                    
                     await db.students.setItem(studentId, student);
                     return true;
                 }
                 return false;
+            },
+            
+            async getMonthlyAttendance(studentId, month) {
+                const student = await this.students.getItem(studentId);
+                if (!student || !student.attendanceHistory) return null;
+                
+                const [year, monthNum] = month.split('-');
+                const monthStart = `${year}-${monthNum}-01`;
+                const nextMonth = parseInt(monthNum) + 1;
+                const monthEnd = nextMonth < 10 ? 
+                    `${year}-0${nextMonth}-01` : 
+                    `${year}-${nextMonth}-01`;
+                
+                // Filtrar asistencias del mes
+                const monthAttendance = student.attendanceHistory.filter(record => {
+                    return record.date >= monthStart && record.date < monthEnd;
+                });
+                
+                return monthAttendance;
             }
         };
         
@@ -1460,6 +1666,16 @@
                 groupFilter.appendChild(option);
             });
             
+            // Actualizar grupos en reportes
+            const reportGroup = document.getElementById('reportGroup');
+            reportGroup.innerHTML = '<option value="all">Todos los grupos</option>';
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group.id;
+                option.textContent = group.name;
+                reportGroup.appendChild(option);
+            });
+            
             // Eventos para eliminar grupos
             document.querySelectorAll('.delete-group').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -1508,14 +1724,25 @@
             studentsTable.innerHTML = '';
             
             students.forEach(student => {
+                // Obtener estado de asistencia de hoy
+                let todayStatus = 'N/A';
+                const today = new Date().toISOString().split('T')[0];
+                
+                if (student.attendanceHistory && student.attendanceHistory.length > 0) {
+                    const todayRecord = student.attendanceHistory.find(r => r.date === today);
+                    if (todayRecord) {
+                        todayStatus = todayRecord.status;
+                    }
+                }
+                
                 const row = document.createElement('tr');
                 row.dataset.id = student.id;
                 row.innerHTML = `
                     <td class="student-name">${student.firstName} ${student.lastName}</td>
                     <td>${student.groupName || 'Sin grupo'}</td>
                     <td>
-                        ${student.lastAttendanceStatus ? 
-                            `<span class="attendance-badge ${student.lastAttendanceStatus}">${student.lastAttendanceStatus}</span>` : 
+                        ${todayStatus !== 'N/A' ? 
+                            `<span class="attendance-badge ${todayStatus}">${todayStatus}</span>` : 
                             'N/A'}
                     </td>
                     <td>
@@ -1531,6 +1758,16 @@
             });
             
             document.getElementById('studentsCount').textContent = students.length;
+            
+            // Actualizar selector de estudiantes en reportes
+            const reportStudent = document.getElementById('reportStudent');
+            reportStudent.innerHTML = '<option value="all">Todos los estudiantes</option>';
+            students.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.id;
+                option.textContent = `${student.firstName} ${student.lastName}`;
+                reportStudent.appendChild(option);
+            });
             
             // Agregar event listeners para editar estudiantes
             document.querySelectorAll('#studentsTable .edit-student').forEach(btn => {
@@ -1586,10 +1823,34 @@
                 // Establecer el estado de asistencia
                 document.querySelectorAll('.attendance-btn').forEach(btn => {
                     btn.classList.remove('active');
-                    if (btn.dataset.status === student.lastAttendanceStatus) {
-                        btn.classList.add('active');
-                    }
                 });
+                
+                // Mostrar estadísticas del estudiante
+                if (student.attendanceHistory && student.attendanceHistory.length > 0) {
+                    // Calcular estadísticas mensuales
+                    const today = new Date();
+                    const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                    const monthAttendance = student.attendanceHistory.filter(r => 
+                        r.date.startsWith(currentMonth)
+                    );
+                    
+                    const presentCount = monthAttendance.filter(r => r.status === 'presente').length;
+                    const absentCount = monthAttendance.filter(r => r.status === 'ausente').length;
+                    const lateCount = monthAttendance.filter(r => r.status === 'tardanza').length;
+                    const totalDays = monthAttendance.length;
+                    const attendanceRate = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0;
+                    
+                    // Actualizar UI
+                    document.getElementById('monthAttendance').textContent = `${attendanceRate}%`;
+                    document.getElementById('totalPresent').textContent = presentCount;
+                    document.getElementById('totalAbsent').textContent = absentCount;
+                    document.getElementById('totalLate').textContent = lateCount;
+                    
+                    // Mostrar sección de estadísticas
+                    document.getElementById('studentStatsSection').style.display = 'block';
+                } else {
+                    document.getElementById('studentStatsSection').style.display = 'none';
+                }
                 
                 // Destacar estudiante seleccionado
                 document.querySelectorAll('#studentsTable tr').forEach(row => {
@@ -1628,6 +1889,9 @@
             
             document.getElementById(`${tabName}Tab`).classList.add('active');
             document.querySelector(`.nav-tab[data-tab="${tabName}"]`).classList.add('active');
+            
+            // Cerrar menú móvil al cambiar de pestaña
+            document.getElementById('mobileMenu').classList.remove('active');
         }
         
         function generateCalendar(containerId) {
@@ -1724,24 +1988,86 @@
         // Inicializar gráficos con datos reales
         let attendanceChartInstance = null;
         let performanceChartInstance = null;
+        let monthlyChartInstance = null;
         
         async function updateReportCharts() {
+            // Obtener mes seleccionado
+            const monthInput = document.getElementById('reportMonth');
+            const selectedMonth = monthInput.value || new Date().toISOString().slice(0, 7);
+            
+            // Obtener grupo seleccionado
+            const groupSelect = document.getElementById('reportGroup');
+            const selectedGroupId = groupSelect.value;
+            
+            // Obtener estudiante seleccionado
+            const studentSelect = document.getElementById('reportStudent');
+            const selectedStudentId = studentSelect.value;
+            
+            // Actualizar estadísticas individuales si se seleccionó un estudiante
+            if (selectedStudentId && selectedStudentId !== 'all') {
+                const student = await db.students.getItem(selectedStudentId);
+                if (student && student.attendanceHistory) {
+                    const monthAttendance = student.attendanceHistory.filter(r => 
+                        r.date.startsWith(selectedMonth)
+                    );
+                    
+                    const presentCount = monthAttendance.filter(r => r.status === 'presente').length;
+                    const absentCount = monthAttendance.filter(r => r.status === 'ausente').length;
+                    const lateCount = monthAttendance.filter(r => r.status === 'tardanza').length;
+                    const totalDays = monthAttendance.length;
+                    const attendanceRate = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0;
+                    
+                    document.getElementById('indMonthAttendance').textContent = `${attendanceRate}%`;
+                    document.getElementById('indTotalPresent').textContent = presentCount;
+                    document.getElementById('indTotalAbsent').textContent = absentCount;
+                    document.getElementById('indTotalLate').textContent = lateCount;
+                    
+                    document.getElementById('individualStats').style.display = 'block';
+                } else {
+                    document.getElementById('individualStats').style.display = 'none';
+                }
+            } else {
+                document.getElementById('individualStats').style.display = 'none';
+            }
+            
+            // Obtener datos para gráficos
+            const groups = [];
+            const groupAttendance = [];
+            
+            await db.groups.iterate(async (group) => {
+                // Si se seleccionó un grupo específico, saltar otros
+                if (selectedGroupId !== 'all' && group.id !== selectedGroupId) return;
+                
+                groups.push(group.name);
+                
+                // Calcular asistencia mensual para el grupo
+                let groupPresentCount = 0;
+                let groupTotalDays = 0;
+                
+                await db.students.iterate((student) => {
+                    if (student.groupId === group.id && student.attendanceHistory) {
+                        const monthAttendance = student.attendanceHistory.filter(r => 
+                            r.date.startsWith(selectedMonth)
+                        );
+                        
+                        monthAttendance.forEach(record => {
+                            groupTotalDays++;
+                            if (record.status === 'presente') groupPresentCount++;
+                        });
+                    }
+                });
+                
+                const attendanceRate = groupTotalDays > 0 ? Math.round((groupPresentCount / groupTotalDays) * 100) : 0;
+                groupAttendance.push(attendanceRate);
+            });
+            
             // Destruir gráficos anteriores si existen
             if (attendanceChartInstance) {
                 attendanceChartInstance.destroy();
             }
-            if (performanceChartInstance) {
-                performanceChartInstance.destroy();
+            if (monthlyChartInstance) {
+                monthlyChartInstance.destroy();
             }
-            
-            // Obtener datos reales para los gráficos
-            const groups = [];
-            const groupAttendance = [];
-            
-            await db.groups.iterate((group) => {
-                groups.push(group.name);
-                groupAttendance.push(group.attendanceRate || 0);
-            });
             
             // Gráfico de asistencia por grupo
             const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
@@ -1784,49 +2110,34 @@
                 }
             });
             
-            // Obtener datos para rendimiento general
-            let presentCount = 0;
-            let absentCount = 0;
-            let lateCount = 0;
-            
-            await db.students.iterate((student) => {
-                if (student.lastAttendanceStatus === 'presente') {
-                    presentCount++;
-                } else if (student.lastAttendanceStatus === 'ausente') {
-                    absentCount++;
-                } else if (student.lastAttendanceStatus === 'tardanza') {
-                    lateCount++;
-                }
-            });
-            
-            // Gráfico de rendimiento de estudiantes
-            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
-            performanceChartInstance = new Chart(performanceCtx, {
-                type: 'pie',
+            // Gráfico de asistencia mensual
+            const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+            monthlyChartInstance = new Chart(monthlyCtx, {
+                type: 'line',
                 data: {
-                    labels: ['Presente', 'Ausente', 'Tardanza'],
+                    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
                     datasets: [{
-                        label: 'Distribución de Asistencia',
-                        data: [presentCount, absentCount, lateCount],
-                        backgroundColor: [
-                            'rgba(75, 192, 192, 0.6)',
-                            'rgba(255, 99, 132, 0.6)',
-                            'rgba(255, 206, 86, 0.6)'
-                        ],
-                        borderColor: [
-                            'rgba(75, 192, 192, 1)',
-                            'rgba(255, 99, 132, 1)',
-                            'rgba(255, 206, 86, 1)'
-                        ],
-                        borderWidth: 1
+                        label: 'Asistencia semanal',
+                        data: [85, 78, 92, 88],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
                         }
                     }
                 }
@@ -1971,6 +2282,9 @@
                     document.querySelectorAll('#studentsTable tr').forEach(row => {
                         row.classList.remove('selected');
                     });
+                    
+                    // Ocultar estadísticas
+                    document.getElementById('studentStatsSection').style.display = 'none';
                 });
                 
                 // Botón flotante para nuevo estudiante
@@ -1997,6 +2311,9 @@
                                 document.querySelectorAll('.attendance-btn').forEach(btn => {
                                     btn.classList.remove('active');
                                 });
+                                
+                                // Ocultar estadísticas
+                                document.getElementById('studentStatsSection').style.display = 'none';
                             }
                         );
                     }
@@ -2059,8 +2376,7 @@
                                 groupId: groupId,
                                 groupName: groupName,
                                 attendanceRate: '0%',
-                                lastAttendanceStatus: null,
-                                lastAttendanceDate: null,
+                                attendanceHistory: [],
                                 syncStatus: 'pending'
                             });
                             await db.addToPending('students', studentId);
@@ -2104,10 +2420,15 @@
                             if (student) {
                                 const row = document.querySelector(`#studentsTable tr[data-id="${photoService.currentStudentId}"]`);
                                 if (row) {
+                                    const today = new Date().toISOString().split('T')[0];
+                                    const todayRecord = student.attendanceHistory.find(r => r.date === today);
                                     const attendanceCell = row.cells[2];
-                                    attendanceCell.innerHTML = student.lastAttendanceStatus ? 
-                                        `<span class="attendance-badge ${student.lastAttendanceStatus}">${student.lastAttendanceStatus}</span>` : 
-                                        'N/A';
+                                    
+                                    if (todayRecord) {
+                                        attendanceCell.innerHTML = todayRecord.status ? 
+                                            `<span class="attendance-badge ${todayRecord.status}">${todayRecord.status}</span>` : 
+                                            'N/A';
+                                    }
                                 }
                             }
                             
@@ -2172,8 +2493,7 @@
                             groupId,
                             groupName,
                             photo,
-                            lastAttendanceStatus: null,
-                            lastAttendanceDate: null
+                            attendanceHistory: []
                         });
                         
                         photoService.currentStudentId = studentId;
@@ -2229,12 +2549,39 @@
                     });
                 });
                 
+                // Menú móvil
+                document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+                    document.getElementById('mobileMenu').classList.toggle('active');
+                });
+                
+                // Botón "Empezar ahora"
+                document.getElementById('startNowBtn').addEventListener('click', function() {
+                    activateTab('groups');
+                });
+                
+                // Selectores de reportes
+                document.getElementById('reportMonth').addEventListener('change', updateReportCharts);
+                document.getElementById('reportGroup').addEventListener('change', updateReportCharts);
+                document.getElementById('reportStudent').addEventListener('change', updateReportCharts);
+                
                 // Inicializar gráficos cuando se muestre la pestaña de reportes
-                document.getElementById('reportsTab').addEventListener('click', updateReportCharts);
+                document.getElementById('reportsTab').addEventListener('click', function() {
+                    // Establecer mes actual por defecto
+                    const today = new Date();
+                    const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                    document.getElementById('reportMonth').value = currentMonth;
+                    
+                    updateReportCharts();
+                });
                 
                 // Cargar datos iniciales
                 await loadGroups();
                 await loadStudents();
+                
+                // Establecer mes actual por defecto en reportes
+                const today = new Date();
+                const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                document.getElementById('reportMonth').value = currentMonth;
                 
             } catch (error) {
                 console.error('Error inicializando aplicación:', error);
@@ -2266,8 +2613,12 @@
             
             await db.students.iterate((student) => {
                 totalStudents++;
-                if (student.lastAttendanceStatus === 'presente') {
-                    presentCount++;
+                if (student.attendanceHistory && student.attendanceHistory.length > 0) {
+                    const today = new Date().toISOString().split('T')[0];
+                    const todayRecord = student.attendanceHistory.find(r => r.date === today);
+                    if (todayRecord && todayRecord.status === 'presente') {
+                        presentCount++;
+                    }
                 }
             });
             
@@ -2282,8 +2633,12 @@
                 await db.students.iterate((student) => {
                     if (student.groupId === group.id) {
                         groupTotalStudents++;
-                        if (student.lastAttendanceStatus === 'presente') {
-                            groupPresentCount++;
+                        if (student.attendanceHistory && student.attendanceHistory.length > 0) {
+                            const today = new Date().toISOString().split('T')[0];
+                            const todayRecord = student.attendanceHistory.find(r => r.date === today);
+                            if (todayRecord && todayRecord.status === 'presente') {
+                                groupPresentCount++;
+                            }
                         }
                     }
                 });
