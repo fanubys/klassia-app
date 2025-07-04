@@ -689,7 +689,7 @@
                 box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.7);
             }
             70% {
-                box-shadow: 0 极客time="1"0 0 10px rgba(67, 97, 238, 0);
+                box-shadow: 0 0 0 10px rgba(67, 97, 238, 0);
             }
             100% {
                 box-shadow: 0 0 0 0 rgba(67, 97, 238, 0);
@@ -710,7 +710,7 @@
             align-items: center;
             gap: 10px;
             z-index: 1000;
-            box-shadow: 0 4px 12极客time="1"x rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             animation: slideIn 0.3s ease, fadeOut 0.5s ease 2s forwards;
         }
         
@@ -780,7 +780,7 @@
             font-weight: 500;
         }
         
-极客time="1"        .attendance-badge.presente {
+        .attendance-badge.presente {
             background-color: #4ade80;
             color: white;
         }
@@ -819,7 +819,7 @@
         /* Student stats */
         .student-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));250px, 1fr));
             gap: 1rem;
             margin-top: 1.5rem;
         }
@@ -995,8 +995,8 @@
             </button>
             <nav class="nav-tabs" id="desktopTabs">
                 <div class="nav-tab active" data-tab="dashboard">Dashboard</div>
-                <div class="nav极客time="1"-tab" data-tab="groups">Grupos</div>
-                <div class="nav-tab" data-tab="attendance">Asistencias</极客time="1"div>
+                <div class="nav-tab" data-tab="groups">Grupos</div>
+                <div class="nav-tab" data-tab="attendance">Asistencias</div>
                 <div class="nav-tab" data-tab="reports">Reportes</div>
                 <div class="nav-tab" data-tab="settings">Configuración</div>
             </nav>
@@ -1303,7 +1303,7 @@
             <div class="form-group">
                 <label class="form-label">Nombre del grupo</label>
                 <input type="text" id="groupName" class="form-control" placeholder="Nombre del grupo">
-            </极客time="1"div>
+            </div>
             <div class="confirmation-buttons">
                 <button id="importConfirmBtn" class="btn btn-primary">Importar</button>
                 <button id="cancelImportBtn" class="btn btn-outline">Cancelar</button>
@@ -1601,7 +1601,7 @@
                     },
                     
                     startCamera() {
-                        if (!navigator.media极客time="1"Devices || !navigator.mediaDevices.getUserMedia) {
+                        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                             alert('Tu navegador no soporta el uso de la cámara');
                             return;
                         }
@@ -1682,7 +1682,7 @@
                     zoomPhoto(e) {
                         const photo = safeElementQuery('#studentPhoto');
                         const zoomedPhoto = safeElementQuery('#zoomedPhoto');
-                        const zoomOverlay = safeElementQuery('#zoomOverlay');
+                        const zoomOverlay = const zoomOverlay = safeElementQuery('#zoomOverlay');
                         
                         if (photo && zoomedPhoto && zoomOverlay) {
                             zoomedPhoto.src = photo.src;
@@ -1971,8 +1971,8 @@
                         });
                     }
                     
-                    const studentsCount = safeElementQuery('#students极客time="1"Count');
-                    if (studentsCount) students极客time="1"Count.textContent = students.length;
+                    const studentsCount = safeElementQuery('#studentsCount');
+                    if (studentsCount) studentsCount.textContent = students.length;
                     
                     // Actualizar selector de estudiantes en reportes
                     const reportStudent = safeElementQuery('#reportStudent');
@@ -2274,12 +2274,12 @@
                             const absentCount = monthAttendance.filter(r => r.status === 'ausente').length;
                             const lateCount = monthAttendance.filter(r => r.status === 'tardanza').length;
                             const totalDays = monthAttendance.length;
-                            const attendanceRate = totalDays > 0 ? Math.round((presentCount / totalDays) * 100极客time="1") : 0;
+                            const attendanceRate = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0;
                             
                             // Actualizar UI
                             const indMonthAttendance = safeElementQuery('#indMonthAttendance');
                             const indTotalPresent = safeElementQuery('#indTotalPresent');
-                            const indTotalAbsent = safeElementQuery('#ind极客time="1"TotalAbsent');
+                            const indTotalAbsent = safeElementQuery('#indTotalAbsent');
                             const indTotalLate = safeElementQuery('#indTotalLate');
                             const individualStats = safeElementQuery('#individualStats');
                             
@@ -2890,7 +2890,7 @@
                                     firstName: student.firstName,
                                     lastName: student.lastName,
                                     groupId: groupId,
-                                    groupName: group极客time="1"Name,
+                                    groupName: groupName,
                                     attendanceRate: '0%',
                                     attendanceHistory: [],
                                     syncStatus: 'pending'
