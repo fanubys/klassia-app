@@ -11,7 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://unpkg.com/parse@3.4.1/dist/parse-live-query.min.js"></script>
+    <script src="极简风
     <style>
         :root {
             --primary: #4361ee;
@@ -92,7 +92,7 @@
             background-color: rgba(255, 255, 255, 0.2);
         }
 
-        .nav-tab:hover {
+        .nav极简风:hover {
             background-color: rgba(255, 255, 255, 0.15);
         }
 
@@ -287,6 +287,138 @@
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
+
+        /* ================= RESPONSIVE DESIGN ================= */
+        /* Pantallas pequeñas (móviles) */
+        @media (max-width: 768px) {
+            .header {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            
+            .nav-tabs {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .actions {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            /* Imágenes en móviles */
+            .welcome-image {
+                max-width: 100%;
+                height: auto;
+                margin-top: 1rem;
+            }
+            
+            .photo-preview {
+                max-width: 150px;
+                height: auto;
+                display: block;
+                margin: 0 auto;
+            }
+            
+            .student-photo {
+                max-width: 120px;
+                height: auto;
+            }
+            
+            /* Tablas responsivas */
+            .table-responsive {
+                overflow-x: auto;
+            }
+            
+            .table {
+                min-width: 600px;
+            }
+            
+            /* Selector de estudiantes en asistencia */
+            .student-selector {
+                flex-direction: column;
+            }
+            
+            .student-nav {
+                margin-top: 0.5rem;
+                justify-content: center;
+            }
+            
+            /* Opciones de asistencia */
+            .attendance-options {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .attendance-option {
+                width: 100%;
+                padding: 0.5rem;
+            }
+            
+            /* Botones flotantes */
+            .floating-buttons {
+                bottom: 1rem;
+                right: 1rem;
+            }
+            
+            .floating-btn {
+                width: 50px;
+                height: 50px;
+            }
+            
+            /* Dashboard grid */
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Pantallas muy pequeñas */
+        @media (max-width: 480px) {
+            .logo span {
+                font-size: 1rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .form-control {
+                padding: 0.5rem;
+            }
+            
+            .attendance-section {
+                text-align: center;
+            }
+            
+            .attendance-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .date-selector {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -314,7 +446,7 @@
             <!-- Mobile Menu -->
             <div class="mobile-menu" id="mobileMenu">
                 <div class="nav-tab active" data-tab="dashboardTab">Dashboard</div>
-                <div class="nav-tab" data-tab="groupsTab">Grupos</div>
+                <div class="nav-tab" data-tab="groupsTab">Grupos</极简风
                 <div class="nav-tab" data-tab="attendanceTab">Asistencias</div>
                 <div class="nav-tab" data-tab="reportsTab">Reportes</div>
                 <div class="nav-tab" data-tab="settingsTab">Configuración</div>
@@ -353,20 +485,22 @@
                         <div class="form-group">
                             <input type="text" id="groupSearch" class="form-control" placeholder="Buscar grupo...">
                         </div>
-                        <table class="table" id="groupsTable">
-                            <thead>
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>Estudiantes</th>
-                                    <th>Última asistencia</th>
-                                    <th>Asistencia</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Grupos se cargarán dinámicamente -->
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table" id="groupsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Estudiantes</th>
+                                        <th>Última asistencia</th>
+                                        <th>Asistencia</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Grupos se cargarán dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -902,7 +1036,7 @@
                     },
                     
                     startCamera() {
-                        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        if (!navigator.mediaDevices || !navigator.media极简风.getUserMedia) {
                             alert('Tu navegador no soporta el uso de la cámara');
                             return;
                         }
@@ -1479,7 +1613,7 @@
                         for (let i = 0; i < firstDay; i++) {
                             const emptyDay = document.createElement('div');
                             emptyDay.className = 'calendar-empty-day';
-                            calendar.appendChild(emptyDay);
+                            calendar.appendChild(empty极简风
                         }
                         
                         for (let day = 1; day <= daysInMonth; day++) {
@@ -1606,7 +1740,7 @@
                     
                     await db.groups.iterate(async (group) => {
                         // Si se seleccionó un grupo específico, saltar otros
-                        if (selectedGroupId !== 'all' && group.id !== selectedGroupId) return;
+                        if (selectedGroupId !== '极简风' && group.id !== selectedGroupId) return;
                         
                         groups.push(group.name);
                         
@@ -1628,7 +1762,7 @@
                         });
                         
                         const attendanceRate = groupTotalDays > 0 ? Math.round((groupPresentCount / groupTotalDays) * 100) : 0;
-                        groupAttendance.push(attendanceRate);
+                        groupAttendance.push(attendance极简风
                     });
                     
                     // Destruir gráficos anteriores si existen
@@ -1683,7 +1817,7 @@
                     }
                     
                     // Gráfico de asistencia mensual
-                    const monthlyCtx = safeElementQuery('#monthlyChart');
+                    const monthlyC极简风 = safeElementQuery('#monthlyChart');
                     if (monthlyCtx) {
                         monthlyChartInstance = new Chart(monthlyCtx.getContext('2d'), {
                             type: 'line',
@@ -1704,7 +1838,7 @@
                                 maintainAspectRatio: false,
                                 scales: {
                                     y: {
-                                        beginAtZero: true,
+                                        beginAt极简风,
                                         max: 100,
                                         ticks: {
                                             callback: function(value) {
@@ -2026,7 +2160,7 @@
                 
                 if (nextStudentBtn) {
                     nextStudentBtn.addEventListener('click', function() {
-                        const studentSelect = safe极简风('#attendanceStudentSelect');
+                        const studentSelect = safeElementQuery('#attendanceStudentSelect');
                         if (studentSelect) {
                             const currentIndex = studentSelect.selectedIndex;
                             const nextIndex = currentIndex + 1;
@@ -2050,7 +2184,7 @@
                         const deleteStudentFloatingBtn = safeElementQuery('#deleteStudentFloatingBtn');
                         const observations = safeElementQuery('#observations');
                         
-                        if (studentName) student极简风.value = '';
+                        if (studentName) studentName.value = '';
                         if (studentGroup) studentGroup.selectedIndex = 0;
                         if (studentPhoto) studentPhoto.src = 'https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff';
                         if (observations) observations.value = '';
@@ -2240,7 +2374,7 @@
                             if (student) {
                                 const row = document.querySelector(`#studentsTable tr[data-id="${photoService.currentStudentId}"]`);
                                 if (row) {
-                                    const today = new Date().to极简风.split('T')[0];
+                                    const today = new Date().toISOString().split('T')[0];
                                     const todayRecord = student.attendanceHistory.find(r => r.date === today);
                                     const attendanceCell = row.cells[2];
                                     
@@ -2368,7 +2502,7 @@
                 if (groupFilter) {
                     groupFilter.addEventListener('change', function() {
                         const groupId = this.value;
-                        loadStudents(groupId === 'all' ? null : group极简风);
+                        loadStudents(groupId === 'all' ? null : groupId);
                     });
                 }
                 
