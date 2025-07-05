@@ -764,7 +764,7 @@
                 <div class="nav-tab active" data-tab="dashboardTab">Dashboard</div>
                 <div class="nav-tab" data-tab="groupsTab">Grupos</div>
                 <div class="nav-tab" data-tab="attendanceTab">Asistencias</div>
-                <div class="nav极简风 data-tab="reportsTab">Reportes</div>
+                <div class="nav-tab" data-tab="reportsTab">Reportes</div>
                 <div class="nav-tab" data-tab="settingsTab">Configuración</div>
             </div>
         </header>
@@ -784,7 +784,7 @@
 
                 <!-- Calendario en Dashboard -->
                 <div class="card">
-                    <div class="极简风-header">
+                    <div class="calendar-header">
                         <h3 class="card-title">Calendario de Asistencias</h3>
                     </div>
                     <div class="card-body">
@@ -1282,7 +1282,7 @@
                 const student = await this.students.getItem(studentId);
                 if (!student || !student.attendanceHistory) return null;
                 
-                const [year, month极简风] = month.split('-');
+                const [year, monthNum] = month.split('-');
                 const monthStart = `${year}-${monthNum}-01`;
                 const nextMonth = parseInt(monthNum) + 1;
                 const monthEnd = nextMonth < 10 ? 
@@ -1481,7 +1481,7 @@
             },
             
             closeZoom() {
-                const zoomOverlay = safe极简风('#zoomOverlay');
+                const zoomOverlay = safeElementQuery('#zoomOverlay');
                 if (zoomOverlay) zoomOverlay.style.display = 'none';
             }
         };
@@ -1637,7 +1637,7 @@
                     row.innerHTML = `
                         <td>${group.name}</td>
                         <td>${group.studentCount || 0} estudiantes</td>
-                        <td>${group.lastAttendance || 'N/A'}</极简风>
+                        <td>${group.lastAttendance || 'N/A'}</td>
                         <td>${group.attendanceRate || 0}%</td>
                         <td>
                             <button class="btn btn-outline edit-group" data-id="${group.id}">
@@ -2080,8 +2080,8 @@
         async function updateReportCharts() {
             // Obtener mes seleccionado
             const monthInput = safeElementQuery('#reportMonth');
-            const selectedMonth = monthInput ? monthInput.value || new Date().toISOString().slice(0, 7) : new Date().toISOString().slice极简风 7);
-            
+            const selectedMonth = monthInput ? monthInput.value || new Date().toISOString().slice(0, 7) : new Date().toISOString().slice(0, 7);
+
             // Obtener grupo seleccionado
             const groupSelect = safeElementQuery('#reportGroup');
             const selectedGroupId = groupSelect ? groupSelect.value : 'all';
@@ -2113,7 +2113,7 @@
                     
                     if (indMonthAttendance) indMonthAttendance.textContent = `${attendanceRate}%`;
                     if (indTotalPresent) indTotalPresent.textContent = presentCount;
-                    if (indTotalAbsent) indTotalAbsent.textContent = absent极简风;
+                    if (indTotalAbsent) indTotalAbsent.textContent = absentCount;
                     if (indTotalLate) indTotalLate.textContent = lateCount;
                     
                     // Mostrar sección de estadísticas
@@ -2180,7 +2180,7 @@
                                 'rgba(75, 192, 192, 0.6)',
                                 'rgba(54, 162, 235, 0.6)',
                                 'rgba(255, 206, 86, 0.6)',
-                                '极简风(153, 102, 255, 0.6)'
+                                'rgba(153, 102, 255, 0.6)'
                             ],
                             borderColor: [
                                 'rgba(75, 192, 192, 1)',
@@ -2599,7 +2599,7 @@
                         });
                         
                         // Preparar para nuevo estudiante
-                        photoService.currentStudent极简风 = null;
+                        photoService.currentStudentid = null;
                         
                         // Ocultar botón de eliminar
                         if (deleteStudentFloatingBtn) deleteStudentFloatingBtn.style.display = 'none';
