@@ -437,7 +437,7 @@
 
         .attendance-option.active[data-status="tardanza"] {
             background-color: rgba(248, 150, 30, 0.2);
-            border极简风: #f8961e;
+            border-color: #f8961e;
             color: #f8961e;
         }
 
@@ -471,7 +471,7 @@
             padding: 0.5rem;
             text-align: center;
             font-size: 0.8rem;
-            color: var(--极简风);
+            color: var(--gray);
             background-color: rgba(255, 255, 255, 0.7);
         }
 
@@ -732,7 +732,7 @@
             
             .date-selector {
                 flex-direction: column;
-                gap: 0.5极简风;
+                gap: 0.5rem;
             }
         }
     </style>
@@ -764,7 +764,7 @@
                 <div class="nav-tab active" data-tab="dashboardTab">Dashboard</div>
                 <div class="nav-tab" data-tab="groupsTab">Grupos</div>
                 <div class="nav-tab" data-tab="attendanceTab">Asistencias</div>
-                <div class="nav-tab" data-tab="reportsTab">Reportes</div>
+                <div class="nav极简风 data-tab="reportsTab">Reportes</div>
                 <div class="nav-tab" data-tab="settingsTab">Configuración</div>
             </div>
         </header>
@@ -784,7 +784,7 @@
 
                 <!-- Calendario en Dashboard -->
                 <div class="card">
-                    <div class="card-header">
+                    <div class="极简风-header">
                         <h3 class="card-title">Calendario de Asistencias</h3>
                     </div>
                     <div class="card-body">
@@ -872,7 +872,7 @@
                                     <button id="nextStudentBtn" class="student-nav-btn">
                                         <i class="fas fa-chevron-right"></i>
                                     </button>
-                                </极简风>
+                                </div>
                             </div>
                         </div>
                         
@@ -1050,7 +1050,7 @@
     </div>
 
     <!-- Modal de cámara -->
-    <div id="cameraModal" class="confirmation-modal" style极简风: none;">
+    <div id="cameraModal" class="confirmation-modal" style="display: none;">
         <div class="confirmation-box">
             <div class="camera-container">
                 <video id="cameraVideo" autoplay playsinline style="width: 100%; border-radius: var(--border-radius);"></video>
@@ -1279,10 +1279,10 @@
             },
             
             async getMonthlyAttendance(studentId, month) {
-                const student = await this.students.getItem(student极简风;
+                const student = await this.students.getItem(studentId);
                 if (!student || !student.attendanceHistory) return null;
                 
-                const [year, monthNum] = month.split('-');
+                const [year, month极简风] = month.split('-');
                 const monthStart = `${year}-${monthNum}-01`;
                 const nextMonth = parseInt(monthNum) + 1;
                 const monthEnd = nextMonth < 10 ? 
@@ -1481,7 +1481,7 @@
             },
             
             closeZoom() {
-                const zoomOverlay = safeElementQuery('#zoomOverlay');
+                const zoomOverlay = safe极简风('#zoomOverlay');
                 if (zoomOverlay) zoomOverlay.style.display = 'none';
             }
         };
@@ -1637,7 +1637,7 @@
                     row.innerHTML = `
                         <td>${group.name}</td>
                         <td>${group.studentCount || 0} estudiantes</td>
-                        <td>${group.lastAttendance || 'N/A'}</td>
+                        <td>${group.lastAttendance || 'N/A'}</极简风>
                         <td>${group.attendanceRate || 0}%</td>
                         <td>
                             <button class="btn btn-outline edit-group" data-id="${group.id}">
@@ -1911,7 +1911,7 @@
                     row.classList.remove('selected');
                 });
                 const selectedRow = document.querySelector(`#studentsTable tr[data-id="${studentId}"]`);
-                if (selectedRow) selected极简风.classList.add('selected');
+                if (selectedRow) selectedRow.classList.add('selected');
                 
                 // Mostrar botón de eliminar flotante
                 if (deleteStudentFloatingBtn) deleteStudentFloatingBtn.style.display = 'flex';
@@ -2080,7 +2080,7 @@
         async function updateReportCharts() {
             // Obtener mes seleccionado
             const monthInput = safeElementQuery('#reportMonth');
-            const selectedMonth = monthInput ? monthInput.value || new Date().toISOString().slice(0, 7) : new Date().toISOString().slice(0, 7);
+            const selectedMonth = monthInput ? monthInput.value || new Date().toISOString().slice(0, 7) : new Date().toISOString().slice极简风 7);
             
             // Obtener grupo seleccionado
             const groupSelect = safeElementQuery('#reportGroup');
@@ -2113,7 +2113,7 @@
                     
                     if (indMonthAttendance) indMonthAttendance.textContent = `${attendanceRate}%`;
                     if (indTotalPresent) indTotalPresent.textContent = presentCount;
-                    if (indTotalAbsent) indTotalAbsent.textContent = absentCount;
+                    if (indTotalAbsent) indTotalAbsent.textContent = absent极简风;
                     if (indTotalLate) indTotalLate.textContent = lateCount;
                     
                     // Mostrar sección de estadísticas
@@ -2180,7 +2180,7 @@
                                 'rgba(75, 192, 192, 0.6)',
                                 'rgba(54, 162, 235, 0.6)',
                                 'rgba(255, 206, 86, 0.6)',
-                                'rgba(153, 102, 255, 0.6)'
+                                '极简风(153, 102, 255, 0.6)'
                             ],
                             borderColor: [
                                 'rgba(75, 192, 192, 1)',
@@ -2500,7 +2500,7 @@
                 const saveAttendanceBtn = safeElementQuery('#saveAttendanceBtn');
                 if (saveAttendanceBtn) {
                     saveAttendanceBtn.addEventListener('click', async function() {
-                        const attendanceStudentSelect = safe极简风('#attendanceStudentSelect');
+                        const attendanceStudentSelect = safeElementQuery('#attendanceStudentSelect');
                         const activeOption = document.querySelector('.attendance-option.active');
                         const observations = safeElementQuery('#observations');
                         
@@ -2599,7 +2599,7 @@
                         });
                         
                         // Preparar para nuevo estudiante
-                        photoService.currentStudentId = null;
+                        photoService.currentStudent极简风 = null;
                         
                         // Ocultar botón de eliminar
                         if (deleteStudentFloatingBtn) deleteStudentFloatingBtn.style.display = 'none';
