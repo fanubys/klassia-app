@@ -893,12 +893,13 @@
                             
                             <div class="attendance-section">
                                 <h3 class="section-title">Foto de Asistencia</h3>
-                                <img id="attendancePhotoPreview" class="photo-preview" src="https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff">
+                                <img id="studentPhoto" class="photo-preview" src="https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff">
                                 <div class="attendance-actions">
-                                    <button id="takeAttendancePhotoBtn" class="btn btn-outline">
+                                    <!-- CORRECCIÓN: IDs actualizados -->
+                                    <button id="takePhotoBtn" class="btn btn-outline">
                                         <i class="fas fa-camera"></i> Tomar Foto
                                     </button>
-                                    <button id="uploadAttendancePhotoBtn" class="btn btn-outline">
+                                    <button id="uploadPhotoBtn" class="btn btn-outline">
                                         <i class="fas fa-upload"></i> Subir Foto
                                     </button>
                                 </div>
@@ -1374,8 +1375,6 @@
                 const uploadPhotoBtn = safeElementQuery('#uploadPhotoBtn');
                 const studentPhoto = safeElementQuery('#studentPhoto');
                 const zoomOverlay = safeElementQuery('#zoomOverlay');
-                const takeAttendancePhotoBtn = safeElementQuery('#takeAttendancePhotoBtn');
-                const uploadAttendancePhotoBtn = safeElementQuery('#uploadAttendancePhotoBtn');
                 
                 if (takePhotoBtn) takePhotoBtn.addEventListener('click', this.startCamera.bind(this));
                 if (captureBtn) captureBtn.addEventListener('click', this.capturePhoto.bind(this));
@@ -1383,8 +1382,6 @@
                 if (uploadPhotoBtn) uploadPhotoBtn.addEventListener('click', this.uploadPhoto.bind(this));
                 if (studentPhoto) studentPhoto.addEventListener('click', this.zoomPhoto.bind(this));
                 if (zoomOverlay) zoomOverlay.addEventListener('click', this.closeZoom.bind(this));
-                if (takeAttendancePhotoBtn) takeAttendancePhotoBtn.addEventListener('click', this.startCamera.bind(this));
-                if (uploadAttendancePhotoBtn) uploadAttendancePhotoBtn.addEventListener('click', this.uploadPhoto.bind(this));
             },
             
             startCamera() {
@@ -1413,7 +1410,6 @@
                 const video = safeElementQuery('#cameraVideo');
                 const canvas = safeElementQuery('#cameraCanvas');
                 const studentPhoto = safeElementQuery('#studentPhoto');
-                const attendancePhotoPreview = safeElementQuery('#attendancePhotoPreview');
                 
                 if (video && canvas) {
                     canvas.width = video.videoWidth;
@@ -1423,7 +1419,6 @@
                     
                     const photoData = canvas.toDataURL('image/png');
                     if (studentPhoto) studentPhoto.src = photoData;
-                    if (attendancePhotoPreview) attendancePhotoPreview.src = photoData;
                     
                     this.closeCamera();
                 }
@@ -1456,10 +1451,7 @@
                         const reader = new FileReader();
                         reader.onload = event => {
                             const studentPhoto = safeElementQuery('#studentPhoto');
-                            const attendancePhotoPreview = safeElementQuery('#attendancePhotoPreview');
-                            
                             if (studentPhoto) studentPhoto.src = event.target.result;
-                            if (attendancePhotoPreview) attendancePhotoPreview.src = event.target.result;
                         };
                         reader.readAsDataURL(file);
                     }
@@ -1547,77 +1539,85 @@
             }
         };
 
-        // Configurar cliente LiveQuery para actualizaciones en tiempo real
-        function initLiveQueries() {
-            // Configurar cliente LiveQuery
-            const liveQueryClient = new Parse.LiveQueryClient({
-                applicationId: PARSE_APP_ID,
-                serverURL: 'wss://' + PARSE_APP_ID.replace(/:/g,'') +'.backend.back4app.io',
-                javascriptKey: PARSE_JS_KEY
-            });
+        // CORRECCIÓN: LiveQuery con parámetros
+        function initLiveQueries(appId, jsKey) {
+            if (!appId || appId.includes('TU_APP_ID') || !jsKey || jsKey.includes('TU_JS_KEY')) {
+                console.warn('Credenciales Parse inválidas. LiveQuery desactivado.');
+                return;
+            }
             
-            liveQueryClient.open();
-            
-            // Suscripción a cambios en Grupos
-            const Group = Parse.Object.extend('Group');
-            const groupQuery = new Parse.Query(Group);
-            const subscription = liveQueryClient.subscribe(groupQuery);
+            try {
+                const liveQueryClient = new Parse.LiveQueryClient({
+                    applicationId: appId,
+                    serverURL: `wss://${appId.replace(/:/g,'')}.backend.back4app.com`,
+                    javascriptKey: jsKey
+                });
+                
+                liveQueryClient.open();
+                
+                // Suscripción a cambios en Grupos
+                const Group = Parse.Object.extend('Group');
+                const groupQuery = new Parse.Query(Group);
+                const subscription = liveQueryClient.subscribe(groupQuery);
 
-            subscription.on('create', (group) => {
-                if (!document.hasFocus()) {
-                    showToast(`Nuevo grupo creado: ${group.get('name')}`);
-                    logEvent(`Nuevo grupo recibido por LiveQuery: ${group.get('name')}`);
-                    // Actualizar UI si estamos en la pestaña de grupos
-                    if (document.querySelector('.nav-tab[data-tab="groupsTab"]').classList.contains('active')) {
+                subscription.on('create', (group) => {
+                    if (!document.hasFocus()) {
+                        showToast(`Nuevo grupo creado: ${group.get('name')}`);
+                        logEvent(`Nuevo grupo recibido por LiveQuery: ${group.get('name')}`);
+                        // Actualizar UI si estamos en la pestaña de grupos
+                        if (document.querySelector('.nav-tab[data-tab="groupsTab"]').classList.contains('active')) {
+                            loadGroups();
+                        }
+                    }
+                });
+
+                subscription.on('update', (group) => {
+                    if (!document.hasFocus()) {
+                        showToast(`Grupo actualizado: ${group.get('name')}`);
+                        logEvent(`Grupo actualizado por LiveQuery: ${group.get('name')}`);
                         loadGroups();
                     }
-                }
-            });
+                });
 
-            subscription.on('update', (group) => {
-                if (!document.hasFocus()) {
-                    showToast(`Grupo actualizado: ${group.get('name')}`);
-                    logEvent(`Grupo actualizado por LiveQuery: ${group.get('name')}`);
-                    loadGroups();
-                }
-            });
+                // Suscripción a cambios en Estudiantes
+                const Student = Parse.Object.extend('Student');
+                const studentQuery = new Parse.Query(Student);
+                const studentSub = liveQueryClient.subscribe(studentQuery);
 
-            // Suscripción a cambios en Estudiantes
-            const Student = Parse.Object.extend('Student');
-            const studentQuery = new Parse.Query(Student);
-            const studentSub = liveQueryClient.subscribe(studentQuery);
-
-            studentSub.on('create', (student) => {
-                if (!document.hasFocus()) {
-                    showToast(`Nuevo estudiante: ${student.get('firstName')} ${student.get('lastName')}`);
-                    logEvent(`Nuevo estudiante recibido por LiveQuery: ${student.get('firstName')} ${student.get('lastName')}`);
-                    loadStudents();
-                }
-            });
-
-            studentSub.on('update', (student) => {
-                if (!document.hasFocus()) {
-                    showToast(`Estudiante actualizado: ${student.get('firstName')}`);
-                    logEvent(`Estudiante actualizado por LiveQuery: ${student.get('firstName')}`);
-                    loadStudents();
-                }
-            });
-
-            // Suscripción a Asistencias
-            const Attendance = Parse.Object.extend('Attendance');
-            const attendanceQuery = new Parse.Query(Attendance);
-            const attendanceSub = liveQueryClient.subscribe(attendanceQuery);
-
-            attendanceSub.on('create', (attendance) => {
-                if (!document.hasFocus()) {
-                    showToast(`Asistencia registrada para ${attendance.get('studentName')}`);
-                    logEvent(`Asistencia recibida por LiveQuery para: ${attendance.get('studentName')}`);
-                    // Actualizar reportes si estamos en esa pestaña
-                    if (document.querySelector('.nav-tab[data-tab="reportsTab"]').classList.contains('active')) {
-                        updateReportCharts();
+                studentSub.on('create', (student) => {
+                    if (!document.hasFocus()) {
+                        showToast(`Nuevo estudiante: ${student.get('firstName')} ${student.get('lastName')}`);
+                        logEvent(`Nuevo estudiante recibido por LiveQuery: ${student.get('firstName')} ${student.get('lastName')}`);
+                        loadStudents();
                     }
-                }
-            });
+                });
+
+                studentSub.on('update', (student) => {
+                    if (!document.hasFocus()) {
+                        showToast(`Estudiante actualizado: ${student.get('firstName')}`);
+                        logEvent(`Estudiante actualizado por LiveQuery: ${student.get('firstName')}`);
+                        loadStudents();
+                    }
+                });
+
+                // Suscripción a Asistencias
+                const Attendance = Parse.Object.extend('Attendance');
+                const attendanceQuery = new Parse.Query(Attendance);
+                const attendanceSub = liveQueryClient.subscribe(attendanceQuery);
+
+                attendanceSub.on('create', (attendance) => {
+                    if (!document.hasFocus()) {
+                        showToast(`Asistencia registrada para ${attendance.get('studentName')}`);
+                        logEvent(`Asistencia recibida por LiveQuery para: ${attendance.get('studentName')}`);
+                        // Actualizar reportes si estamos en esa pestaña
+                        if (document.querySelector('.nav-tab[data-tab="reportsTab"]').classList.contains('active')) {
+                            updateReportCharts();
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error en LiveQuery:', error);
+            }
         }
         
         // Funciones de UI
@@ -2343,8 +2343,13 @@
                 syncService.initAutoSync();
                 photoService.init();
                 
-                // Inicializar LiveQuery
-                initLiveQueries();
+                // Inicializar LiveQuery solo si tenemos credenciales válidas
+                if (PARSE_APP_ID !== 'TU_APP_ID_BACK4APP' && 
+                    PARSE_JS_KEY !== 'TU_JS_KEY_BACK4APP') {
+                    initLiveQueries(PARSE_APP_ID, PARSE_JS_KEY);
+                } else {
+                    console.warn('Credenciales Parse no configuradas. LiveQuery desactivado.');
+                }
 
                 // Generar calendarios
                 generateCalendar('dashboardCalendar');
