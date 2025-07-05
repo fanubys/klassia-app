@@ -272,11 +272,16 @@
         }
 
         /* Calendar */
+        .calendar-container {
+            max-width: 900px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        
         .calendar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 0.5rem;
-            margin-top: 1rem;
+            gap: 0.25rem;
         }
 
         .calendar-header {
@@ -299,10 +304,15 @@
 
         .calendar-day, .calendar-empty-day {
             text-align: center;
-            padding: 0.75rem 0;
-            border-radius: 50%;
+            padding: 0.5rem 0;
+            border-radius: 8px;
             cursor: pointer;
             transition: var(--transition);
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
         }
 
         .calendar-day:hover {
@@ -705,6 +715,11 @@
                 padding: 0.5rem 0;
                 font-size: 0.8rem;
             }
+            
+            .calendar-container {
+                max-width: 100%;
+                padding: 0 0.5rem;
+            }
         }
 
         /* Pantallas muy pequeñas */
@@ -788,7 +803,9 @@
                         <h3 class="card-title">Calendario de Asistencias</h3>
                     </div>
                     <div class="card-body">
-                        <div id="dashboardCalendar"></div>
+                        <div class="calendar-container">
+                            <div id="dashboardCalendar"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -895,7 +912,6 @@
                                 <h3 class="section-title">Foto de Asistencia</h3>
                                 <img id="studentPhoto" class="photo-preview" src="https://ui-avatars.com/api/?name=Estudiante&background=4361ee&color=fff">
                                 <div class="attendance-actions">
-                                    <!-- CORRECCIÓN: IDs actualizados -->
                                     <button id="takePhotoBtn" class="btn btn-outline">
                                         <i class="fas fa-camera"></i> Tomar Foto
                                     </button>
@@ -946,7 +962,9 @@
                                 <h3 class="card-title">Calendario de Asistencias</h3>
                             </div>
                             <div class="card-body">
-                                <div id="reportCalendar"></div>
+                                <div class="calendar-container">
+                                    <div id="reportCalendar"></div>
+                                </div>
                             </div>
                         </div>
 
@@ -1109,6 +1127,7 @@
             </div>
         </div>
     </div>
+    
     <script>
         // Verificar que los elementos existen antes de usarlos
         function safeElementQuery(selector) {
