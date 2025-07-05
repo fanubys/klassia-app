@@ -54,7 +54,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: var(--极简风);
+            box-shadow: var(--shadow);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -159,7 +159,7 @@
             gap: 1rem;
         }
 
-极简风 .card-title {
+        .card-title {
             font-weight: 600;
             font-size: 1.1rem;
             color: var(--dark);
@@ -437,7 +437,7 @@
 
         .attendance-option.active[data-status="tardanza"] {
             background-color: rgba(248, 150, 30, 0.2);
-            border-color: #f8961e;
+            border极简风: #f8961e;
             color: #f8961e;
         }
 
@@ -471,7 +471,7 @@
             padding: 0.5rem;
             text-align: center;
             font-size: 0.8rem;
-            color: var(--gray);
+            color: var(--极简风);
             background-color: rgba(255, 255, 255, 0.7);
         }
 
@@ -517,7 +517,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 极简风
+            font-size: 1.5rem;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             transition: var(--transition);
         }
@@ -530,7 +530,8 @@
         .floating-btn-danger {
             background-color: var(--danger);
             color: white;
-极简风
+        }
+
         .floating-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 6px 12px rgba(0,0,0,0.3);
@@ -553,7 +554,7 @@
         .confirmation-box {
             background: white;
             padding: 2rem;
-            border-radius极简风 var(--border-radius);
+            border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             max-width: 500px;
             width: 90%;
@@ -731,7 +732,7 @@
             
             .date-selector {
                 flex-direction: column;
-                gap: 0.5rem;
+                gap: 0.5极简风;
             }
         }
     </style>
@@ -818,7 +819,7 @@
                                 <i class="fas fa-file-import"></i> Importar CSV
                             </button>
                             <button id="addGroupBtn" class="btn btn-primary">
-                                <i class="fas fa-plus"></极简风> Nuevo Grupo
+                                <i class="fas fa-plus"></i> Nuevo Grupo
                             </button>
                         </div>
                     </div>
@@ -871,7 +872,7 @@
                                     <button id="nextStudentBtn" class="student-nav-btn">
                                         <i class="fas fa-chevron-right"></i>
                                     </button>
-                                </div>
+                                </极简风>
                             </div>
                         </div>
                         
@@ -986,7 +987,7 @@
                             </div>
                             <div class="stats-card">
                                 <div class="stats-label">Tardanzas</div>
-                                <div class="stats-value" id="indTotalLate">0</极简风>
+                                <div class="stats-value" id="indTotalLate">0</div>
                             </div>
                         </div>
                     </div>
@@ -1049,7 +1050,7 @@
     </div>
 
     <!-- Modal de cámara -->
-    <div id="cameraModal" class="confirmation-modal" style="display: none;">
+    <div id="cameraModal" class="confirmation-modal" style极简风: none;">
         <div class="confirmation-box">
             <div class="camera-container">
                 <video id="cameraVideo" autoplay playsinline style="width: 100%; border-radius: var(--border-radius);"></video>
@@ -1278,7 +1279,7 @@
             },
             
             async getMonthlyAttendance(studentId, month) {
-                const student = await this.students.getItem(studentId);
+                const student = await this.students.getItem(student极简风;
                 if (!student || !student.attendanceHistory) return null;
                 
                 const [year, monthNum] = month.split('-');
@@ -1612,7 +1613,7 @@
                     showToast(`Asistencia registrada para ${attendance.get('studentName')}`);
                     logEvent(`Asistencia recibida por LiveQuery para: ${attendance.get('studentName')}`);
                     // Actualizar reportes si estamos en esa pestaña
-                    if (document.querySelector('.nav-tab[data-tab="reports极简风"]').classList.contains('active')) {
+                    if (document.querySelector('.nav-tab[data-tab="reportsTab"]').classList.contains('active')) {
                         updateReportCharts();
                     }
                 }
@@ -1652,7 +1653,7 @@
             }
             
             const groupsCount = safeElementQuery('#groupsCount');
-            if (groupsCount) groups极简风.textContent = groups.length;
+            if (groupsCount) groupsCount.textContent = groups.length;
             
             // Actualizar selector de grupos en asistencia
             const attendanceGroupFilter = safeElementQuery('#attendanceGroupFilter');
@@ -1910,7 +1911,7 @@
                     row.classList.remove('selected');
                 });
                 const selectedRow = document.querySelector(`#studentsTable tr[data-id="${studentId}"]`);
-                if (selectedRow) selectedRow.classList.add('selected');
+                if (selectedRow) selected极简风.classList.add('selected');
                 
                 // Mostrar botón de eliminar flotante
                 if (deleteStudentFloatingBtn) deleteStudentFloatingBtn.style.display = 'flex';
@@ -2182,7 +2183,7 @@
                                 'rgba(153, 102, 255, 0.6)'
                             ],
                             borderColor: [
-                                '极简风(75, 192, 192, 1)',
+                                'rgba(75, 192, 192, 1)',
                                 'rgba(54, 162, 235, 1)',
                                 'rgba(255, 206, 86, 1)',
                                 'rgba(153, 102, 255, 1)'
@@ -2464,7 +2465,7 @@
                                         const todayRecord = student.attendanceHistory.find(r => r.date === today);
                                         if (todayRecord) {
                                             const activeBtn = document.querySelector(`.attendance-option[data-status="${todayRecord.status}"]`);
-                                            if (active极简风) {
+                                            if (activeBtn) {
                                                 activeBtn.classList.add('active');
                                             }
                                             // Cargar observaciones
@@ -2499,7 +2500,7 @@
                 const saveAttendanceBtn = safeElementQuery('#saveAttendanceBtn');
                 if (saveAttendanceBtn) {
                     saveAttendanceBtn.addEventListener('click', async function() {
-                        const attendanceStudentSelect = safeElementQuery('#attendanceStudentSelect');
+                        const attendanceStudentSelect = safe极简风('#attendanceStudentSelect');
                         const activeOption = document.querySelector('.attendance-option.active');
                         const observations = safeElementQuery('#observations');
                         
@@ -2598,7 +2599,7 @@
                         });
                         
                         // Preparar para nuevo estudiante
-                        photoService.currentStudent极简风 = null;
+                        photoService.currentStudentId = null;
                         
                         // Ocultar botón de eliminar
                         if (deleteStudentFloatingBtn) deleteStudentFloatingBtn.style.display = 'none';
@@ -2898,7 +2899,7 @@
                 // Cancelar edición de grupo
                 const cancelEditGroup = safeElementQuery('#cancelEditGroup');
                 if (cancelEditGroup) {
-                    cancelEditGroup.addEventListener('click', ()极简风 {
+                    cancelEditGroup.addEventListener('click', () => {
                         const editGroupModal = safeElementQuery('#editGroupModal');
                         if (editGroupModal) editGroupModal.style.display = 'none';
                     });
