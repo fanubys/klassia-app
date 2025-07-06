@@ -68,7 +68,7 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
         const attendance = dailyAttendance[student.id];
         setCurrentStatus(attendance?.status || null);
         setCurrentObservations(attendance?.observations || '');
-        setPhotoUrl(student.photoUrl || `https://i.pravatar.cc/150?u=${student.id}`);
+        setPhotoUrl(student.photoUrl);
     };
 
     const handleGoBackToList = () => {
@@ -155,7 +155,7 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
                                         </div>
                                     </>
                                 ) : (
-                                    <span className="text-gray-400 text-sm">Sin foto</span>
+                                    <Users size={48} className="text-gray-500"/>
                                 )}
                             </button>
                             <div className="flex items-center justify-center gap-2">
@@ -225,7 +225,13 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
                           <div className="space-y-2">
                               {studentsInSelectedGroup.map(student => (
                                    <button key={student.id} onClick={() => handleSelectStudent(student)} className="w-full flex items-center p-3 rounded-lg hover:bg-gray-700/60 transition-colors cursor-pointer text-left">
-                                      <img src={student.photoUrl} alt={`${student.firstName} ${student.lastName}`} className="w-10 h-10 rounded-full object-cover mr-4" />
+                                      {student.photoUrl ? (
+                                        <img src={student.photoUrl} alt={`${student.firstName} ${student.lastName}`} className="w-10 h-10 rounded-full object-cover mr-4" />
+                                      ) : (
+                                        <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center mr-4 flex-shrink-0">
+                                            <Users size={20} className="text-gray-400" />
+                                        </div>
+                                      )}
                                       <div className="flex-grow">
                                           <p className="font-medium text-gray-100">{student.firstName} {student.lastName}</p>
                                       </div>

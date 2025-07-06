@@ -203,7 +203,6 @@ const Groups: React.FC<GroupsProps> = ({ groups, students, setGroups, setStudent
                               firstName,
                               lastName,
                               attendanceHistory: [],
-                              photoUrl: `https://i.pravatar.cc/150?u=s${Date.now()}-${newStudents.length}`
                           });
                       }
                   }

@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import Groups from './components/Groups';
@@ -9,7 +9,38 @@ import Sugerencias from './components/Sugerencias';
 import Settings from './components/Settings';
 import { Tab, Group, Student } from './types';
 
-// MOCK DATA CENTRALIZED
+// Custom hook to manage state with localStorage persistence
+function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+    const [storedValue, setStoredValue] = useState<T>(() => {
+        if (typeof window === 'undefined') {
+            return initialValue;
+        }
+        try {
+            const item = window.localStorage.getItem(key);
+            return item ? JSON.parse(item) : initialValue;
+        } catch (error) {
+            console.error(error);
+            return initialValue;
+        }
+    });
+
+    const setValue: React.Dispatch<React.SetStateAction<T>> = (value) => {
+        try {
+            const valueToStore = value instanceof Function ? value(storedValue) : value;
+            setStoredValue(valueToStore);
+            if (typeof window !== 'undefined') {
+                window.localStorage.setItem(key, JSON.stringify(valueToStore));
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    return [storedValue, setValue];
+}
+
+
+// MOCK DATA - Used only if localStorage is empty (first visit)
 const initialGroups: Group[] = [
   { id: 'g1', name: 'Math 101', studentCount: 4 },
   { id: 'g2', name: 'History 202', studentCount: 3 },
@@ -34,49 +65,38 @@ const initialStudents: Student[] = [
   { id: 's12', groupId: 'g4', firstName: 'Jane', lastName: 'Anderson', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s12' },
   { id: 's13', groupId: 'g5', firstName: 'Kevin', lastName: 'Taylor', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s13' },
   { id: 's14', groupId: 'g5', firstName: 'Laura', lastName: 'Thomas', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s14' },
-  { id: 's15', groupId: 'g6', firstName: 'Michael', lastName: 'Hernandez', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s15' },
-  { id: 's16', groupId: 'g6', firstName: 'Nancy', lastName: 'Moore', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s16' },
-  { id: 's17', groupId: 'g6', firstName: 'Oscar', lastName: 'Martin', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s17' },
-  { id: 's18', groupId: 'g6', firstName: 'Patricia', lastName: 'Jackson', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s18' },
-  { id: 's19', groupId: 'g6', firstName: 'Quentin', lastName: 'Thompson', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s19' },
+  { id: 's15', groupId: 'g6', firstName: 'Michael', lastName: 'Harris', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s15' },
+  { id: 's16', groupId: 'g6', firstName: 'Nancy', lastName: 'Clark', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s16' },
+  { id: 's17', groupId: 'g6', firstName: 'Olivia', lastName: 'Lewis', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s17' },
+  { id: 's18', groupId: 'g6', firstName: 'Peter', lastName: 'Walker', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s18' },
+  { id: 's19', groupId: 'g6', firstName: 'Quinn', lastName: 'Hall', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s19' },
 ];
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Inicio);
-  const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, synced, error
-  const [groups, setGroups] = useState<Group[]>(initialGroups);
-  const [students, setStudents] = useState<Student[]>(initialStudents);
-
+  const [groups, setGroups] = useLocalStorage<Group[]>('klassia-groups', initialGroups);
+  const [students, setStudents] = useLocalStorage<Student[]>('klassia-students', initialStudents);
+  const [syncStatus, setSyncStatus] = useState('synced'); // 'synced', 'syncing', 'error'
 
   useEffect(() => {
-    const syncInterval = setInterval(async () => {
-        setSyncStatus('syncing');
-        console.log('Syncing attendance data...');
-        try {
-            // Simulate network request
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            console.log('Sync successful!');
-            setSyncStatus('synced');
-        } catch (error) {
-            console.error('Sync failed:', error);
-            setSyncStatus('error');
-        }
-        // Reset status back to idle after a few seconds
-        setTimeout(() => setSyncStatus('idle'), 2000);
-    }, 30000); // Sync every 30 seconds
-
-    return () => clearInterval(syncInterval);
-  }, []);
+    // A simple effect to show a "syncing" status when data changes
+    setSyncStatus('syncing');
+    const timer = setTimeout(() => {
+        // In a real app, this would be an API call confirmation
+        setSyncStatus('synced');
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [groups, students]);
 
 
-  const renderContent = useCallback(() => {
+  const renderContent = () => {
     switch (activeTab) {
       case Tab.Inicio:
-        return <Dashboard setActiveTab={setActiveTab} totalStudents={students.length} totalGroups={groups.length} />;
+        return <Dashboard setActiveTab={setActiveTab} totalStudents={students.length} totalGroups={groups.length}/>;
       case Tab.Grupos:
-        return <Groups groups={groups} students={students} setGroups={setGroups} setStudents={setStudents} />;
+        return <Groups groups={groups} setGroups={setGroups} students={students} setStudents={setStudents} />;
       case Tab.Asistencia:
-        return <Attendance groups={groups} students={students} setStudents={setStudents} />;
+        return <Attendance groups={groups} students={students} setStudents={setStudents}/>;
       case Tab.Reportes:
         return <Reports />;
       case Tab.Sugerencias:
@@ -86,22 +106,14 @@ const App: React.FC = () => {
       default:
         return <Dashboard setActiveTab={setActiveTab} totalStudents={students.length} totalGroups={groups.length}/>;
     }
-  }, [activeTab, groups, students]);
+  };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-900 text-gray-200">
+    <div className="min-h-screen bg-gray-900 text-gray-100">
       <Header activeTab={activeTab} setActiveTab={setActiveTab} syncStatus={syncStatus} />
-      <main className="flex-1 p-4 sm:p-6 lg:p-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {renderContent()}
       </main>
-      <footer className="p-4 text-gray-400 text-sm border-t border-gray-700 bg-gray-800">
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-x-4 gap-y-1 text-center flex-wrap">
-            <span>Desarrollado por: Fabián de Castillo</span>
-            <span className="hidden sm:inline">|</span>
-            <a href="mailto:fabdecas@gmail.com" className="text-primary-light hover:underline">email: fabdecas@gmail.com</a>
-            <span>celular: +598 92 603 921</span>
-        </div>
-      </footer>
     </div>
   );
 };
