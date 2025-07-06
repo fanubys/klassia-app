@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -24,3 +25,14 @@ dist-ssr
 *.sw?
 
 .vercel
+=======
+# Ignorar node_modules
+node_modules/
+
+# Ignorar archivos de entorno
+.env
+.env.local
+
+# Ignorar archivos del sistema
+.DS_Store
+>>>>>>> 5d11abcd30b50aae3bff7d85fc428d3c06ac8097
