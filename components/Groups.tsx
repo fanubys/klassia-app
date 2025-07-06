@@ -5,41 +5,14 @@ import { Group, Student } from '../types';
 import { Plus, Search, Edit, Trash2, FileUp, ArrowLeft } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-// MOCK DATA
-const initialGroups: Group[] = [
-  { id: 'g1', name: 'Math 101', studentCount: 4 },
-  { id: 'g2', name: 'History 202', studentCount: 3 },
-  { id: 'g3', name: 'Art Fundamentals', studentCount: 2 },
-  { id: 'g4', name: 'Physics for Beginners', studentCount: 3 },
-  { id: 'g5', name: 'Advanced Chemistry', studentCount: 2 },
-  { id: 'g6', name: 'Literature Club', studentCount: 5 },
-];
+interface GroupsProps {
+    groups: Group[];
+    students: Student[];
+    setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
+    setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
+}
 
-const initialStudents: Student[] = [
-  { id: 's1', groupId: 'g1', firstName: 'Alice', lastName: 'Johnson', attendanceHistory: [] },
-  { id: 's2', groupId: 'g1', firstName: 'Bob', lastName: 'Williams', attendanceHistory: [] },
-  { id: 's3', groupId: 'g1', firstName: 'Catherine', lastName: 'Smith', attendanceHistory: [] },
-  { id: 's4', groupId: 'g1', firstName: 'David', lastName: 'Jones', attendanceHistory: [] },
-  { id: 's5', groupId: 'g2', firstName: 'Charlie', lastName: 'Brown', attendanceHistory: [] },
-  { id: 's6', groupId: 'g2', firstName: 'Diana', lastName: 'Miller', attendanceHistory: [] },
-  { id: 's7', groupId: 'g2', firstName: 'Edward', lastName: 'Davis', attendanceHistory: [] },
-  { id: 's8', groupId: 'g3', firstName: 'Fiona', lastName: 'Garcia', attendanceHistory: [] },
-  { id: 's9', groupId: 'g3', firstName: 'George', lastName: 'Rodriguez', attendanceHistory: [] },
-  { id: 's10', groupId: 'g4', firstName: 'Hannah', lastName: 'Wilson', attendanceHistory: [] },
-  { id: 's11', groupId: 'g4', firstName: 'Ian', lastName: 'Martinez', attendanceHistory: [] },
-  { id: 's12', groupId: 'g4', firstName: 'Jane', lastName: 'Anderson', attendanceHistory: [] },
-  { id: 's13', groupId: 'g5', firstName: 'Kevin', lastName: 'Taylor', attendanceHistory: [] },
-  { id: 's14', groupId: 'g5', firstName: 'Laura', lastName: 'Thomas', attendanceHistory: [] },
-  { id: 's15', groupId: 'g6', firstName: 'Michael', lastName: 'Hernandez', attendanceHistory: [] },
-  { id: 's16', groupId: 'g6', firstName: 'Nancy', lastName: 'Moore', attendanceHistory: [] },
-  { id: 's17', groupId: 'g6', firstName: 'Oscar', lastName: 'Martin', attendanceHistory: [] },
-  { id: 's18', groupId: 'g6', firstName: 'Patricia', lastName: 'Jackson', attendanceHistory: [] },
-  { id: 's19', groupId: 'g6', firstName: 'Quentin', lastName: 'Thompson', attendanceHistory: [] },
-];
-
-const Groups: React.FC = () => {
-  const [groups, setGroups] = useState<Group[]>(initialGroups);
-  const [students, setStudents] = useState<Student[]>(initialStudents);
+const Groups: React.FC<GroupsProps> = ({ groups, students, setGroups, setStudents }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [currentGroupName, setCurrentGroupName] = useState('');
@@ -60,7 +33,7 @@ const Groups: React.FC = () => {
   
   const showFeedback = (message: string, type: 'success' | 'error') => {
     setFeedback({ message, type });
-    setTimeout(() => setFeedback(null), 3000);
+    setTimeout(() => setFeedback(null), 4000);
   };
 
   // --- Group Management ---
@@ -103,7 +76,7 @@ const Groups: React.FC = () => {
       showFeedback(`Grupo "${trimmedName}" añadido correctamente.`, 'success');
     }
     closeGroupModal();
-  }, [currentGroupName, editingGroup, closeGroupModal]);
+  }, [currentGroupName, editingGroup, closeGroupModal, setGroups]);
 
   const handleDeleteGroup = useCallback((groupId: string) => {
     const groupToDelete = groups.find(g => g.id === groupId);
@@ -114,7 +87,7 @@ const Groups: React.FC = () => {
       setStudents(prevStudents => prevStudents.filter(student => student.groupId !== groupId));
       showFeedback(`El grupo "${groupToDelete.name}" se ha eliminado correctamente.`, 'success');
     }
-  }, [groups]);
+  }, [groups, setGroups, setStudents]);
 
   // --- Student Management ---
   const handleViewStudents = (group: Group) => {
@@ -169,7 +142,7 @@ const Groups: React.FC = () => {
       showFeedback(`Estudiante "${fullName}" añadido a ${viewingStudentsOf.name}.`, 'success');
     }
     closeStudentModal();
-  }, [currentStudentFirstName, currentStudentLastName, editingStudent, viewingStudentsOf, closeStudentModal]);
+  }, [currentStudentFirstName, currentStudentLastName, editingStudent, viewingStudentsOf, closeStudentModal, setStudents, setGroups]);
 
   const handleDeleteStudent = useCallback((student: Student) => {
     if (!viewingStudentsOf) return;
@@ -178,7 +151,7 @@ const Groups: React.FC = () => {
       setGroups(prev => prev.map(g => g.id === viewingStudentsOf.id ? { ...g, studentCount: g.studentCount - 1 } : g));
       showFeedback(`Estudiante eliminado.`, 'success');
     }
-  }, [viewingStudentsOf]);
+  }, [viewingStudentsOf, setStudents, setGroups]);
 
   const filteredStudents = viewingStudentsOf
     ? students.filter(student => student.groupId === viewingStudentsOf.id &&
@@ -187,68 +160,84 @@ const Groups: React.FC = () => {
 
   // --- Import ---
   const handleImportClick = () => fileInputRef.current?.click();
+  
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // ... existing import logic ...
-    const file = event.target.files?.[0];
-    if (!file) return;
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    setFeedback(null);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const data = new Uint8Array(e.target?.result as ArrayBuffer);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json<{ name?: string, 'Nombre del Grupo'?: string }>(worksheet);
+      setFeedback(null);
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+          try {
+              const groupNameFromFilename = file.name.replace(/\.[^/.]+$/, "").trim();
+              if (!groupNameFromFilename) {
+                  showFeedback('No se pudo determinar el nombre del grupo desde el nombre del archivo.', 'error');
+                  return;
+              }
+              const isNameDuplicate = groups.some(g => g.name.toLowerCase() === groupNameFromFilename.toLowerCase());
+              if (isNameDuplicate) {
+                  showFeedback(`Un grupo con el nombre "${groupNameFromFilename}" ya existe.`, 'error');
+                  return;
+              }
 
-            let importedGroups: Group[] = [];
-            if (json.length > 0) {
-                 importedGroups = json.map((row, index) => {
-                    const name = row.name || row['Nombre del Grupo'];
-                    if (!name || typeof name !== 'string' || name.trim() === '') return null;
-                    return {
-                        id: `g-imported-${Date.now()}-${index}`,
-                        name: name.trim(),
-                        studentCount: 0,
-                    };
-                }).filter((g): g is Group => g !== null);
-            }
-            
-            let newUniqueGroups = importedGroups.filter(newGroup =>
-                !groups.some(existingGroup => existingGroup.name.toLowerCase() === newGroup.name.toLowerCase())
-            );
-            
-            if (newUniqueGroups.length === 0 && importedGroups.length === 0) {
-                 const groupNameFromFilename = file.name.replace(/\.[^/.]+$/, "").trim();
-                 const isNameDuplicate = groups.some(g => g.name.toLowerCase() === groupNameFromFilename.toLowerCase());
-                 if (groupNameFromFilename && !isNameDuplicate) {
-                     newUniqueGroups.push({
-                         id: `g-imported-${Date.now()}`,
-                         name: groupNameFromFilename,
-                         studentCount: 0,
-                     });
-                 }
-            }
-            
-            if (newUniqueGroups.length === 0) {
-                 showFeedback('No se encontraron nuevos grupos para importar o los nombres ya existen.', 'error' );
-            } else {
-                setGroups(prevGroups => [...newUniqueGroups, ...prevGroups]);
-                showFeedback(`${newUniqueGroups.length} ${newUniqueGroups.length === 1 ? 'grupo importado' : 'grupos importados'} correctamente.`, 'success');
-            }
-        } catch (error: any) {
-            console.error('Error importing groups:', error);
-            showFeedback(`Error al importar el archivo: ${error.message || 'Formato de archivo inválido.'}`, 'error');
-        } finally {
-            if(event.target) event.target.value = '';
-        }
-    };
-    reader.onerror = () => {
-        showFeedback('No se pudo leer el archivo.', 'error');
-        if(event.target) event.target.value = '';
-    };
-    reader.readAsArrayBuffer(file);
+              const data = new Uint8Array(e.target?.result as ArrayBuffer);
+              const workbook = XLSX.read(data, { type: 'array' });
+              const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+              const rows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+
+              const newStudents: Student[] = [];
+              const newGroupId = `g${Date.now()}`;
+
+              for (const row of rows) {
+                  const fullName = row[0]; // Assuming name is in the first column
+                  if (fullName && typeof fullName === 'string' && fullName.trim()) {
+                      const nameParts = fullName.trim().split(/\s+/);
+                      const firstName = nameParts.shift() || '';
+                      const lastName = nameParts.join(' ') || '';
+                      
+                      if (firstName) { // Ensure there is at least a first name
+                          newStudents.push({
+                              id: `s${Date.now()}-${newStudents.length}`,
+                              groupId: newGroupId,
+                              firstName,
+                              lastName,
+                              attendanceHistory: [],
+                              photoUrl: `https://i.pravatar.cc/150?u=s${Date.now()}-${newStudents.length}`
+                          });
+                      }
+                  }
+              }
+
+              if (newStudents.length === 0) {
+                  showFeedback('No se encontraron nombres de estudiantes válidos en la primera columna del archivo.', 'error');
+                  return;
+              }
+
+              const newGroup: Group = {
+                  id: newGroupId,
+                  name: groupNameFromFilename,
+                  studentCount: newStudents.length,
+              };
+              
+              setGroups(prev => [newGroup, ...prev]);
+              setStudents(prev => [...prev, ...newStudents]);
+              showFeedback(`Grupo "${groupNameFromFilename}" con ${newStudents.length} estudiantes importado correctamente.`, 'success');
+
+          } catch (error: any) {
+              console.error('Error importing file:', error);
+              showFeedback(`Error al importar el archivo: ${error.message || 'Formato de archivo inválido.'}`, 'error');
+          } finally {
+              if (event.target) event.target.value = '';
+          }
+      };
+      
+      reader.onerror = () => {
+          showFeedback('No se pudo leer el archivo.', 'error');
+          if (event.target) event.target.value = '';
+      };
+      
+      reader.readAsArrayBuffer(file);
   };
   
   const renderGroupList = () => (
@@ -256,7 +245,7 @@ const Groups: React.FC = () => {
       title="Gestión de Grupos"
       actions={
         <div className="flex items-center space-x-2">
-          <input type="file" ref={fileInputRef} onChange={handleFileImport} className="hidden" accept=".xlsx,.xls,.ods"/>
+          <input type="file" ref={fileInputRef} onChange={handleFileImport} className="hidden" accept=".xlsx,.xls,.csv,.ods"/>
           <button onClick={handleImportClick} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-success hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
               <FileUp size={16} className="mr-2"/> Importar
           </button>

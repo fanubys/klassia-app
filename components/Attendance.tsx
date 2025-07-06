@@ -4,37 +4,11 @@ import Card from './Card';
 import { Group, Student, AttendanceStatus } from '../types';
 import { Camera, Check, Clock, X, Save, ZoomIn, FileUp, ArrowLeft, ChevronRight, Users } from 'lucide-react';
 
-// MOCK DATA (enhanced from Groups.tsx for self-containment)
-const initialGroups: Group[] = [
-  { id: 'g1', name: 'Math 101', studentCount: 4 },
-  { id: 'g2', name: 'History 202', studentCount: 3 },
-  { id: 'g3', name: 'Art Fundamentals', studentCount: 2 },
-  { id: 'g4', name: 'Physics for Beginners', studentCount: 3 },
-  { id: 'g5', name: 'Advanced Chemistry', studentCount: 2 },
-  { id: 'g6', name: 'Literature Club', studentCount: 5 },
-];
-
-const initialStudents: Student[] = [
-  { id: 's1', groupId: 'g1', firstName: 'Alice', lastName: 'Johnson', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s1' },
-  { id: 's2', groupId: 'g1', firstName: 'Bob', lastName: 'Williams', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s2' },
-  { id: 's3', groupId: 'g1', firstName: 'Catherine', lastName: 'Smith', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s3' },
-  { id: 's4', groupId: 'g1', firstName: 'David', lastName: 'Jones', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s4' },
-  { id: 's5', groupId: 'g2', firstName: 'Charlie', lastName: 'Brown', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s5' },
-  { id: 's6', groupId: 'g2', firstName: 'Diana', lastName: 'Miller', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s6' },
-  { id: 's7', groupId: 'g2', firstName: 'Edward', lastName: 'Davis', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s7' },
-  { id: 's8', groupId: 'g3', firstName: 'Fiona', lastName: 'Garcia', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s8' },
-  { id: 's9', groupId: 'g3', firstName: 'George', lastName: 'Rodriguez', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s9' },
-  { id: 's10', groupId: 'g4', firstName: 'Hannah', lastName: 'Wilson', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s10' },
-  { id: 's11', groupId: 'g4', firstName: 'Ian', lastName: 'Martinez', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s11' },
-  { id: 's12', groupId: 'g4', firstName: 'Jane', lastName: 'Anderson', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s12' },
-  { id: 's13', groupId: 'g5', firstName: 'Kevin', lastName: 'Taylor', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s13' },
-  { id: 's14', groupId: 'g5', firstName: 'Laura', lastName: 'Thomas', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s14' },
-  { id: 's15', groupId: 'g6', firstName: 'Michael', lastName: 'Hernandez', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s15' },
-  { id: 's16', groupId: 'g6', firstName: 'Nancy', lastName: 'Moore', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s16' },
-  { id: 's17', groupId: 'g6', firstName: 'Oscar', lastName: 'Martin', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s17' },
-  { id: 's18', groupId: 'g6', firstName: 'Patricia', lastName: 'Jackson', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s18' },
-  { id: 's19', groupId: 'g6', firstName: 'Quentin', lastName: 'Thompson', attendanceHistory: [], photoUrl: 'https://i.pravatar.cc/150?u=s19' },
-];
+interface AttendanceProps {
+    groups: Group[];
+    students: Student[];
+    setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
+}
 
 const ImageZoomModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ imageUrl, onClose }) => (
     <div
@@ -65,10 +39,8 @@ const StatusBadge: React.FC<{ status?: AttendanceStatus }> = ({ status }) => {
     }
 };
 
-const Attendance: React.FC = () => {
-    const [groups] = useState<Group[]>(initialGroups);
-    const [students, setStudents] = useState<Student[]>(initialStudents);
-    const [selectedGroupId, setSelectedGroupId] = useState<string>(initialGroups[0]?.id || '');
+const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }) => {
+    const [selectedGroupId, setSelectedGroupId] = useState<string>(groups[0]?.id || '');
     const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
     const [dailyAttendance, setDailyAttendance] = useState<Record<string, { status: AttendanceStatus; observations: string }>>({});
     
@@ -79,6 +51,16 @@ const Attendance: React.FC = () => {
     const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     
+    // Effect to handle group changes (e.g., deletion)
+    useEffect(() => {
+        const groupExists = groups.some(g => g.id === selectedGroupId);
+        if (!groupExists && groups.length > 0) {
+            setSelectedGroupId(groups[0].id);
+        } else if (groups.length === 0) {
+            setSelectedGroupId('');
+        }
+    }, [groups, selectedGroupId]);
+
     const studentsInSelectedGroup = students.filter(s => s.groupId === selectedGroupId);
     
     const handleSelectStudent = (student: Student) => {
@@ -108,6 +90,13 @@ const Attendance: React.FC = () => {
                 observations: currentObservations
             }
         }));
+        // TODO: Persist attendance to the main student record if needed
+        // For example:
+        // const todayStr = new Date().toISOString().split('T')[0];
+        // setStudents(prev => prev.map(s => s.id === viewingStudent.id ? {
+        //     ...s,
+        //     attendanceHistory: [...s.attendanceHistory, { date: todayStr, status: currentStatus, observations: currentObservations }]
+        // } : s));
         handleGoBackToList();
     };
 
@@ -222,12 +211,12 @@ const Attendance: React.FC = () => {
             <div className="space-y-6">
                 <div>
                     <label htmlFor="group" className="block text-sm font-medium text-gray-300 mb-1">Seleccionar Grupo</label>
-                    <select id="group" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="w-full pl-3 pr-10 py-2 text-base bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                    <select id="group" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="w-full pl-3 pr-10 py-2 text-base bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md" disabled={groups.length === 0}>
                         {groups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}
                     </select>
                 </div>
                 
-                {selectedGroup && (
+                {selectedGroup ? (
                   <div>
                       <h3 className="text-lg font-semibold text-gray-200 border-b border-gray-700 pb-2 mb-4">
                           Estudiantes en "{selectedGroup.name}"
@@ -257,6 +246,15 @@ const Attendance: React.FC = () => {
                               </p>
                           </div>
                       )}
+                  </div>
+                ) : (
+                  <div className="text-center py-10 px-4 text-gray-500 bg-gray-800/50 rounded-lg">
+                      <Users size={48} className="mx-auto text-gray-600 mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-300">No hay grupos disponibles</h3>
+                      <p className="mt-1 text-sm">
+                          Para empezar, crea o importa tu primer grupo 
+                          en la pestaña de <span className="font-semibold text-primary-light">Grupos</span>.
+                      </p>
                   </div>
                 )}
             </div>

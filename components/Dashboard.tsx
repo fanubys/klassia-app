@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Card from './Card';
 import Calendar from './Calendar';
@@ -6,6 +7,8 @@ import { Users, BookOpen, CheckCircle, Play } from 'lucide-react';
 
 interface DashboardProps {
   setActiveTab: (tab: Tab) => void;
+  totalStudents: number;
+  totalGroups: number;
 }
 
 const StatCard: React.FC<{ icon: React.ElementType; label: string; value: string; color: string, iconColor: string }> = ({ icon: Icon, label, value, color, iconColor }) => (
@@ -20,7 +23,7 @@ const StatCard: React.FC<{ icon: React.ElementType; label: string; value: string
   </Card>
 );
 
-const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
+const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, totalStudents, totalGroups }) => {
   const today = new Date();
 
   return (
@@ -47,8 +50,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
       </Card>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <StatCard icon={Users} label="Total Estudiantes" value="128" color="bg-blue-500/20" iconColor="text-blue-300" />
-        <StatCard icon={BookOpen} label="Total Grupos" value="8" color="bg-indigo-500/20" iconColor="text-indigo-300" />
+        <StatCard icon={Users} label="Total Estudiantes" value={totalStudents.toString()} color="bg-blue-500/20" iconColor="text-blue-300" />
+        <StatCard icon={BookOpen} label="Total Grupos" value={totalGroups.toString()} color="bg-indigo-500/20" iconColor="text-indigo-300" />
         <StatCard icon={CheckCircle} label="Asistencia Hoy" value="92%" color="bg-green-500/20" iconColor="text-green-300" />
       </div>
 
