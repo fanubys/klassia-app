@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import Card from './Card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
@@ -50,9 +49,9 @@ const Reports: React.FC = () => {
             });
 
             setAiSummary(response.text);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error generating AI summary:", err);
-            setError("Hubo un error al generar el resumen. Por favor, intente de nuevo.");
+            setError(`Hubo un error al generar el resumen: ${err.message || 'Por favor, intente de nuevo.'}`);
         } finally {
             setIsLoading(false);
         }
@@ -75,7 +74,7 @@ const Reports: React.FC = () => {
                 format: [canvas.width, canvas.height]
             });
             pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-            pdf.save('reporte-klassia.pdf');
+            pdf.save('reporte-klassia-app.pdf');
         } catch (error) {
             console.error("Error generating PDF:", error);
             alert("Hubo un error al generar el PDF.");
@@ -100,7 +99,7 @@ const Reports: React.FC = () => {
                  XLSX.utils.book_append_sheet(wb, ws3, 'Resumen IA');
             }
 
-            XLSX.writeFile(wb, 'reporte-klassia.xlsx');
+            XLSX.writeFile(wb, 'reporte-klassia-app.xlsx');
         } catch (error) {
             console.error("Error generating Excel:", error);
             alert("Hubo un error al generar el archivo Excel.");

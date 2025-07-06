@@ -22,7 +22,7 @@ const Sugerencias: React.FC = () => {
 
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const prompt = `Un usuario de la aplicación Klassia ha enviado la siguiente sugerencia para mejorar el producto. Analiza el sentimiento y la viabilidad de la sugerencia, y clasifícala. Sugerencia: "${suggestion}"`;
+            const prompt = `Un usuario de la aplicación Klassia-app ha enviado la siguiente sugerencia para mejorar el producto. Analiza el sentimiento y la viabilidad de la sugerencia, y clasifícala. Sugerencia: "${suggestion}"`;
             
             // We don't need the response for this mock, just the successful call
             await ai.models.generateContent({
@@ -32,9 +32,9 @@ const Sugerencias: React.FC = () => {
 
             setFeedbackMessage('¡Gracias por tu sugerencia! La hemos recibido y la tendremos en cuenta para futuras mejoras.');
             setSuggestion('');
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error sending suggestion:", error);
-            setFeedbackMessage("Hubo un error al enviar tu sugerencia. Por favor, inténtalo de nuevo más tarde.");
+            setFeedbackMessage(`Hubo un error al enviar tu sugerencia. ${error.message || 'Por favor, inténtalo de nuevo más tarde.'}`);
             setIsError(true);
         } finally {
             setIsLoading(false);
@@ -53,7 +53,7 @@ const Sugerencias: React.FC = () => {
         >
             <div className="max-w-2xl mx-auto">
                 <p className="mb-4 text-gray-400">
-                    ¿Tienes alguna idea para mejorar Klassia? ¡Nos encantaría escucharla! Tu opinión es muy importante para nosotros.
+                    ¿Tienes alguna idea para mejorar Klassia-app? ¡Nos encantaría escucharla! Tu opinión es muy importante para nosotros.
                 </p>
                 <div className="space-y-4">
                     <div>

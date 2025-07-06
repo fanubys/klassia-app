@@ -28,7 +28,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
       <Card className="bg-gradient-to-r from-primary/30 to-gray-800">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="md:w-2/3">
-            <h1 className="text-3xl font-bold text-white">Bienvenido a Klassia</h1>
+            <h1 className="text-3xl font-bold text-white">Bienvenido a Klassia-app</h1>
             <p className="mt-2 text-gray-300">
               El sistema de control de asistencia inteligente que simplifica la gestión de tus grupos y estudiantes.
             </p>
@@ -41,7 +41,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
             </button>
           </div>
           <div className="md:w-1/3 flex justify-center">
-            <img src="/assets/portada.png" alt="Portada de Klassia" className="rounded-lg shadow-lg object-cover w-full h-auto max-w-xs" />
+            <img src="/assets/portada.png" alt="Portada de Klassia-app" className="rounded-lg shadow-lg object-cover w-full h-auto max-w-xs" />
           </div>
         </div>
       </Card>

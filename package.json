@@ -1,6 +1,5 @@
 {
   "name": "klassia-app",
-<<<<<<< HEAD
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -25,36 +24,5 @@
     "@vitejs/plugin-react": "^4.2.0",
     "typescript": "^5.2.2",
     "vite": "^5.0.0"
-=======
-  "version": "1.0.0",
-  "private": true,
-  "description": "Aplicación para control de asistencia educativa",
-  "main": "index.js",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/fanubys/Klassia-app.git"
-  },
-  "keywords": [],
-  "author": "Fabian",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/fanubys/Klassia-app/issues"
-  },
-  "homepage": "https://github.com/fanubys/Klassia-app#readme",
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.0.0",
-    "vite": "^5.0.0",
-    "vite-plugin-pwa": "^1.0.1"
->>>>>>> 5d11abcd30b50aae3bff7d85fc428d3c06ac8097
   }
 }

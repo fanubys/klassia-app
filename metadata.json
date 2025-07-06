@@ -1,5 +1,5 @@
 {
-  "name": "Klassia - Smart Attendance Control",
+  "name": "Klassia-app",
   "description": "An intelligent attendance control system that simplifies the management of your groups and students. Features offline capabilities, real-time sync, insightful reports with AI-powered summaries, and a modern, responsive interface.",
   "requestFramePermissions": [
     "camera"
