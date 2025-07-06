@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import Card from './Card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie, Label } from 'recharts';
 import { Wand2, FileDown, ArrowLeft, Users } from 'lucide-react';
@@ -27,6 +27,14 @@ const Reports: React.FC<ReportsProps> = ({ groups, students }) => {
     const [selectedGroupId, setSelectedGroupId] = useState('all');
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
     const reportContentRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        // If the selected group no longer exists (e.g., was deleted), reset the view.
+        if (selectedGroupId !== 'all' && !groups.some(g => g.id === selectedGroupId)) {
+            setSelectedGroupId('all');
+            setSelectedStudentId(null);
+        }
+    }, [groups, selectedGroupId]);
     
     const reportData = useMemo(() => {
         const studentSource = selectedGroupId === 'all' 
