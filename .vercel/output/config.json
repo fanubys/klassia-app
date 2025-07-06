@@ -1,0 +1,33 @@
+{
+  "version": 3,
+  "routes": [
+    {
+      "src": "^(?:/(.*))$",
+      "headers": {
+        "Cache-Control": "public, max-age=3600, must-revalidate",
+        "Service-Worker-Allowed": "/"
+      },
+      "continue": true
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "^(?:/(.*))$",
+      "dest": "/index.html",
+      "check": true
+    },
+    {
+      "handle": "error"
+    },
+    {
+      "status": 404,
+      "src": "^(?!/api).*$",
+      "dest": "/404.html"
+    }
+  ],
+  "framework": {
+    "version": "5.4.19"
+  },
+  "crons": []
+}
