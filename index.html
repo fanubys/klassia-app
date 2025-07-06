@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Klassia-app</title>
-    <link rel="icon" type="image/png" href="/assets/icon-192.png" />
+    <link rel="icon" type="image/png" href="/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,21 +53,20 @@
         }
       }
     </script>
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.1.0",
     "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
     "react/": "https://esm.sh/react@^19.1.0/",
     "lucide-react": "https://esm.sh/lucide-react@^0.525.0",
+    "xlsx": "https://esm.sh/xlsx@^0.18.5",
     "recharts": "https://esm.sh/recharts@^3.0.2",
     "@google/genai": "https://esm.sh/@google/genai@^1.8.0",
-    "vite": "https://esm.sh/vite@^7.0.2",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^4.6.0",
     "jspdf": "https://esm.sh/jspdf@^3.0.1",
-    "xlsx": "https://esm.sh/xlsx@^0.18.5",
     "html2canvas": "https://esm.sh/html2canvas@^1.4.1",
-    "lucide": "https://esm.sh/lucide@^0.525.0"
+    "vite": "https://esm.sh/vite@^7.0.2",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^4.6.0"
   }
 }
 </script>
@@ -75,6 +74,7 @@
 </head>
   <body class="bg-gray-900 antialiased">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-  </body>
+    <script type="module" src="/src/index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
 </html>

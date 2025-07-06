@@ -63,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, syncStatus }) 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <img src="/assets/icon-192.png" alt="Klassia-app Logo" className="h-8 w-8 mr-2" />
+            <img src="/icon-192.png" alt="Klassia-app Logo" className="h-8 w-8 mr-2" />
             <span className="font-bold text-xl tracking-tight">Klassia-app</span>
             <div className="ml-3 w-4 h-4 flex items-center justify-center">
                 <SyncIndicator status={syncStatus} />
