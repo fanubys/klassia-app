@@ -24,6 +24,15 @@ const StatCard: React.FC<{ icon: React.ElementType; label: string; value: string
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, totalStudents, totalGroups }) => {
   const today = new Date();
+  const buildTimestamp = new Date().toLocaleString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  const version = `v1.1.0 - ${buildTimestamp}`;
 
   return (
     <div className="space-y-6">
@@ -57,6 +66,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, totalStudents, tota
       <Card title="Calendario de Asistencias">
         <Calendar date={today} />
       </Card>
+
+      <footer className="text-center text-gray-500 text-xs pt-4">
+        vers: {version}
+      </footer>
     </div>
   );
 };
