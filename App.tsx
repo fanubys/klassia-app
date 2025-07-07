@@ -98,7 +98,9 @@ const App: React.FC = () => {
       case Tab.Asistencia:
         return <Attendance groups={groups} students={students} setStudents={setStudents}/>;
       case Tab.Reportes:
-        return <Reports />;
+        // We use a key to ensure the component re-mounts when data changes, preventing stale reports.
+        const key = `reports-${groups.length}-${students.length}`;
+        return <Reports key={key} groups={groups} students={students} />;
       case Tab.Sugerencias:
         return <Sugerencias />;
       case Tab.Configuracion:

@@ -50,8 +50,16 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
     const [photoUrl, setPhotoUrl] = useState<string | undefined>('');
     const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    const showFeedback = (message: string, type: 'success' | 'error') => {
+        setFeedback({ message, type });
+        setTimeout(() => setFeedback(null), 3000);
+    };
     
-    // Effect to handle group changes (e.g., deletion)
+    const getTodayString = () => new Date().toISOString().split('T')[0];
+
+    // Effect to handle group changes (e.g., deletion) and load daily attendance
     useEffect(() => {
         const groupExists = groups.some(g => g.id === selectedGroupId);
         if (!groupExists && groups.length > 0) {
@@ -59,7 +67,21 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
         } else if (groups.length === 0) {
             setSelectedGroupId('');
         }
-    }, [groups, selectedGroupId]);
+
+        // Load today's attendance for the selected group
+        const todayStr = getTodayString();
+        const todaysRecords: Record<string, { status: AttendanceStatus; observations: string }> = {};
+        students
+            .filter(s => s.groupId === selectedGroupId)
+            .forEach(s => {
+                const record = s.attendanceHistory.find(r => r.date === todayStr);
+                if (record) {
+                    todaysRecords[s.id] = { status: record.status, observations: record.observations || '' };
+                }
+            });
+        setDailyAttendance(todaysRecords);
+
+    }, [groups, students, selectedGroupId]);
 
     const studentsInSelectedGroup = students.filter(s => s.groupId === selectedGroupId);
     
@@ -83,6 +105,26 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
             alert('Por favor, selecciona un estado de asistencia.');
             return;
         }
+
+        const todayStr = getTodayString();
+        
+        // Update the main students state
+        setStudents(prevStudents => prevStudents.map(s => {
+            if (s.id === viewingStudent.id) {
+                const history = s.attendanceHistory.filter(r => r.date !== todayStr);
+                history.push({
+                    date: todayStr,
+                    status: currentStatus,
+                    observations: currentObservations
+                });
+                // sort history by date descending
+                history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                return { ...s, attendanceHistory: history };
+            }
+            return s;
+        }));
+
+        // Update the local daily state for immediate UI feedback
         setDailyAttendance(prev => ({
             ...prev,
             [viewingStudent.id]: {
@@ -90,13 +132,8 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
                 observations: currentObservations
             }
         }));
-        // TODO: Persist attendance to the main student record if needed
-        // For example:
-        // const todayStr = new Date().toISOString().split('T')[0];
-        // setStudents(prev => prev.map(s => s.id === viewingStudent.id ? {
-        //     ...s,
-        //     attendanceHistory: [...s.attendanceHistory, { date: todayStr, status: currentStatus, observations: currentObservations }]
-        // } : s));
+        
+        showFeedback('Asistencia guardada correctamente.', 'success');
         handleGoBackToList();
     };
 
@@ -207,6 +244,12 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
     const selectedGroup = groups.find(g => g.id === selectedGroupId);
 
     return (
+      <>
+        {feedback && (
+          <div className={`fixed top-20 right-6 z-[100] p-3 rounded-md shadow-lg text-sm text-white ${feedback.type === 'success' ? 'bg-success' : 'bg-danger'}`}>
+              {feedback.message}
+          </div>
+        )}
         <Card title="Control de Asistencia">
             <div className="space-y-6">
                 <div>
@@ -265,6 +308,7 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
                 )}
             </div>
         </Card>
+      </>
     );
 };
 
