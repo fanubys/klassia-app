@@ -52,7 +52,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, totalStudents, tota
             </button>
           </div>
           <div className="md:w-1/3 flex justify-center">
-            <img src="/portada.png" alt="Estudiantes aprendiendo" className="rounded-lg shadow-lg object-cover w-full h-auto max-w-xs" />
+            <img src="/portada1.png" alt="Estudiantes aprendiendo" className="rounded-lg shadow-lg object-cover w-full h-auto max-w-xs transition-transform duration-300 ease-in-out hover:scale-105" />
           </div>
         </div>
       </Card>

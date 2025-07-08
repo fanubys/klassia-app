@@ -1,4 +1,4 @@
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 6;
 const STATIC_CACHE_NAME = `klassia-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE_NAME = `klassia-dynamic-v${CACHE_VERSION}`;
 
@@ -7,7 +7,7 @@ const assetsToCache = [
     '/',
     '/index.html',
     '/icon-192.png',
-    '/portada.png'
+    '/portada1.png'
 ];
 
 self.addEventListener('install', (event) => {
