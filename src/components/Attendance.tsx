@@ -3,11 +3,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import Card from './Card';
 import { Group, Student, AttendanceStatus } from '../types';
 import { Camera, Check, Clock, X, Save, ZoomIn, FileUp, ArrowLeft, ChevronRight, Users } from 'lucide-react';
+import { db } from '../firebase';
+import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+
 
 interface AttendanceProps {
     groups: Group[];
     students: Student[];
-    setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
 }
 
 const ImageZoomModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ imageUrl, onClose }) => (
@@ -39,7 +41,7 @@ const StatusBadge: React.FC<{ status?: AttendanceStatus }> = ({ status }) => {
     }
 };
 
-const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }) => {
+const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
     const [selectedGroupId, setSelectedGroupId] = useState<string>(groups[0]?.id || '');
     const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
     const [dailyAttendance, setDailyAttendance] = useState<Record<string, { status: AttendanceStatus; observations: string }>>({});
@@ -100,41 +102,57 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
         setPhotoUrl('');
     };
     
-    const handleSaveAttendance = () => {
+    const handleSaveAttendance = async () => {
         if (!viewingStudent || !currentStatus) {
             alert('Por favor, selecciona un estado de asistencia.');
             return;
         }
 
         const todayStr = getTodayString();
+        const studentRef = doc(db, 'students', viewingStudent.id);
+        const groupRef = doc(db, 'groups', viewingStudent.groupId);
         
-        // Update the main students state
-        setStudents(prevStudents => prevStudents.map(s => {
-            if (s.id === viewingStudent.id) {
-                const history = s.attendanceHistory.filter(r => r.date !== todayStr);
-                history.push({
-                    date: todayStr,
-                    status: currentStatus,
-                    observations: currentObservations
-                });
-                // sort history by date descending
-                history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                return { ...s, attendanceHistory: history };
-            }
-            return s;
-        }));
-
-        // Update the local daily state for immediate UI feedback
-        setDailyAttendance(prev => ({
-            ...prev,
-            [viewingStudent.id]: {
+        try {
+            // Find if there's an existing record for today
+            const existingRecord = viewingStudent.attendanceHistory.find(r => r.date === todayStr);
+            const newRecord = {
+                date: todayStr,
                 status: currentStatus,
                 observations: currentObservations
+            };
+
+            let updatedHistory = viewingStudent.attendanceHistory;
+
+            if (existingRecord) {
+                // To update an item in an array, we remove the old and add the new one.
+                await updateDoc(studentRef, {
+                    attendanceHistory: arrayRemove(existingRecord)
+                });
             }
-        }));
-        
-        showFeedback('Asistencia guardada correctamente.', 'success');
-        handleGoBackToList();
+            
+            await updateDoc(studentRef, {
+                attendanceHistory: arrayUnion(newRecord)
+            });
+            
+            // Update the group's last modified timestamp
+            await updateDoc(groupRef, { lastModified: new Date().toLocaleString('es-ES') });
+            
+            // Update the local daily state for immediate UI feedback
+            setDailyAttendance(prev => ({
+                ...prev,
+                [viewingStudent.id]: {
+                    status: currentStatus,
+                    observations: currentObservations
+                }
+            }));
+            
+            showFeedback('Asistencia guardada correctamente.', 'success');
+            handleGoBackToList();
+
+        } catch (e) {
+            console.error("Error saving attendance: ", e);
+            showFeedback('Error al guardar la asistencia.', 'error');
+        }
     };
 
     const handleUploadClick = () => fileInputRef.current?.click();
@@ -143,20 +161,21 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
         const file = event.target.files?.[0];
         if (file && file.type.startsWith('image/') && viewingStudent) {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 if (e.target?.result) {
                     const newPhotoUrl = e.target.result as string;
                     // Update the temporary URL for the detail view's image tag
                     setPhotoUrl(newPhotoUrl);
                     
-                    // Persist the change in the main students list
-                    setStudents(prevStudents =>
-                        prevStudents.map(student =>
-                            student.id === viewingStudent.id
-                                ? { ...student, photoUrl: newPhotoUrl }
-                                : student
-                        )
-                    );
+                    try {
+                        const studentRef = doc(db, 'students', viewingStudent.id);
+                        await updateDoc(studentRef, { photoUrl: newPhotoUrl });
+                        showFeedback("Foto actualizada.", 'success');
+                    } catch(err) {
+                        console.error("Error uploading photo:", err);
+                        showFeedback("Error al subir la foto.", 'error');
+                        setPhotoUrl(viewingStudent.photoUrl); // Revert on error
+                    }
                 }
             };
             reader.readAsDataURL(file);
@@ -242,6 +261,10 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
     }
     
     const selectedGroup = groups.find(g => g.id === selectedGroupId);
+    const todayStr = getTodayString();
+    const todayFormatted = new Date(todayStr.replace(/-/g, '/')).toLocaleDateString('es-ES', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
 
     return (
       <>
@@ -252,6 +275,12 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setStudents }
         )}
         <Card title="Control de Asistencia">
             <div className="space-y-6">
+                 <div className="text-center pb-4 mb-4 border-b border-gray-700">
+                    <p className="text-lg font-semibold text-gray-200">
+                        Registrando asistencia para el día:
+                    </p>
+                    <p className="text-primary font-bold text-xl">{todayFormatted}</p>
+                </div>
                 <div>
                     <label htmlFor="group" className="block text-sm font-medium text-gray-300 mb-1">Seleccionar Grupo</label>
                     <select id="group" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="w-full pl-3 pr-10 py-2 text-base bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md" disabled={groups.length === 0}>

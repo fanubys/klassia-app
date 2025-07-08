@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Card from './Card';
 import Calendar from './Calendar';
-import { Tab } from '../types';
+import { Tab, Student } from '../types';
 import { Users, BookOpen, CheckCircle, Play } from 'lucide-react';
 
 interface DashboardProps {
   setActiveTab: (tab: Tab) => void;
   totalStudents: number;
   totalGroups: number;
+  students: Student[];
 }
 
 const StatCard: React.FC<{ icon: React.ElementType; label: string; value: string; color: string, iconColor: string }> = ({ icon: Icon, label, value, color, iconColor }) => (
@@ -22,17 +23,16 @@ const StatCard: React.FC<{ icon: React.ElementType; label: string; value: string
   </Card>
 );
 
-const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, totalStudents, totalGroups }) => {
+const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, totalStudents, totalGroups, students }) => {
   const today = new Date();
-  const buildTimestamp = new Date().toLocaleString('es-ES', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
-  const version = `v1.1.0 - ${buildTimestamp}`;
+  const version = `v${__APP_VERSION__} (compilado: ${__BUILD_TIMESTAMP__})`;
+
+  const registeredTodayCount = useMemo(() => {
+    const todayStr = today.toISOString().split('T')[0];
+    return students.filter(student => 
+      student.attendanceHistory?.some(record => record.date === todayStr)
+    ).length;
+  }, [students, today]);
 
   return (
     <div className="space-y-6">
@@ -60,13 +60,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, totalStudents, tota
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard icon={Users} label="Total Estudiantes" value={totalStudents.toString()} color="bg-blue-500/20" iconColor="text-blue-300" />
         <StatCard icon={BookOpen} label="Total Grupos" value={totalGroups.toString()} color="bg-indigo-500/20" iconColor="text-indigo-300" />
-        <StatCard icon={CheckCircle} label="Asistencia Hoy" value="92%" color="bg-green-500/20" iconColor="text-green-300" />
+        <StatCard icon={CheckCircle} label="Asistencias Registradas Hoy" value={registeredTodayCount.toString()} color="bg-green-500/20" iconColor="text-green-300" />
       </div>
 
       <Card title="Calendario de Asistencias">
-        <Calendar date={today} />
+        <Calendar date={today} students={students} />
       </Card>
-
       <footer className="text-center text-gray-500 text-xs pt-4">
         vers: {version}
       </footer>

@@ -33,6 +33,7 @@ export interface Group {
   id: string;
   name: string;
   studentCount: number;
+  lastModified?: string;
 }
 
 export interface ChartData {

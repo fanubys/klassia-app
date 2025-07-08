@@ -21,7 +21,7 @@ const Sugerencias: React.FC = () => {
         setIsError(false);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
             const prompt = `Un usuario de la aplicación Klassia-app ha enviado la siguiente sugerencia para mejorar el producto. Analiza el sentimiento y la viabilidad de la sugerencia, y clasifícala. Sugerencia: "${suggestion}"`;
             
             // We don't need the response for this mock, just the successful call
