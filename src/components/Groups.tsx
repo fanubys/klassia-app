@@ -218,7 +218,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
       setImportSettings({ groupName: groupNameFromFilename, firstNameCol: '0', lastNameCol: '-1', headerRowIndex: -1 }); // Reset
       
       try {
-        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = `
             You are an intelligent data import assistant. Analyze the following spreadsheet data (headers and a few sample rows) and determine the columns for student names.
 
@@ -259,7 +259,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
 
       } catch (e) {
           console.error("AI analysis failed:", e);
-          showFeedback("La IA no pudo analizar el archivo. Por favor, configura la importación manualmente.", 'warning');
+          showFeedback("La IA no pudo analizar el archivo. Por favor, configura la importación manually.", 'warning');
           setAiSuggestions(null);
       } finally {
           setIsAiLoading(false);

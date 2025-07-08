@@ -104,7 +104,7 @@ const Reports: React.FC<ReportsProps> = ({ groups, students }) => {
              - Distribución de estados: ${JSON.stringify(reportData.statusDistribution)}`;
 
         try {
-            const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = `
                 Generate a brief, insightful summary of the following attendance data for an academic report.
                 Focus on performance, trends, and potential areas of concern.

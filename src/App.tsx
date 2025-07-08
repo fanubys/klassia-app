@@ -8,8 +8,7 @@ import Sugerencias from './components/Sugerencias';
 import Settings from './components/Settings';
 import { Tab, Group, Student } from './types';
 import { RefreshCw } from 'lucide-react';
-import { db } from './firebase';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { useFirestoreSync } from './hooks/useFirestoreSync';
 
 const UpdatePrompt: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => (
     <div className="fixed bottom-6 right-6 z-[100] bg-gray-700 text-white p-4 rounded-lg shadow-xl flex items-center space-x-4 animate-fade-in-up border border-gray-600">
@@ -31,41 +30,22 @@ const UpdatePrompt: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => (
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Inicio);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [syncStatus, setSyncStatus] = useState('syncing'); // 'synced', 'syncing', 'error'
+  const { data: groups, loading: groupsLoading, error: groupsError } = useFirestoreSync<Group>('groups', 'name');
+  const { data: students, loading: studentsLoading, error: studentsError } = useFirestoreSync<Student>('students', 'lastName');
+  const [syncStatus, setSyncStatus] = useState('syncing');
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
 
-  // Real-time data fetching from Firestore
   useEffect(() => {
-    setSyncStatus('syncing');
-
-    const qGroups = query(collection(db, 'groups'), orderBy('name'));
-    const unsubscribeGroups = onSnapshot(qGroups, (querySnapshot) => {
-        const groupsData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Group[];
-        setGroups(groupsData);
+    if (groupsLoading || studentsLoading) {
+        setSyncStatus('syncing');
+    } else if (groupsError || studentsError) {
+        setSyncStatus('error');
+    } else {
         setSyncStatus('synced');
-    }, (error) => {
-        console.error("Error fetching groups:", error);
-        setSyncStatus('error');
-    });
+    }
+  }, [groupsLoading, studentsLoading, groupsError, studentsError]);
 
-    const qStudents = query(collection(db, 'students'), orderBy('lastName'));
-    const unsubscribeStudents = onSnapshot(qStudents, (querySnapshot) => {
-        const studentsData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Student[];
-        setStudents(studentsData);
-    }, (error) => {
-        console.error("Error fetching students:", error);
-        setSyncStatus('error');
-    });
-    
-    // Cleanup subscriptions on unmount
-    return () => {
-        unsubscribeGroups();
-        unsubscribeStudents();
-    };
-  }, []);
   
   // Service Worker update logic
   useEffect(() => {
