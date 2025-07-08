@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Card from './Card';
 import { Group, Student, AttendanceStatus } from '../types';
@@ -120,8 +119,6 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
                 status: currentStatus,
                 observations: currentObservations
             };
-
-            let updatedHistory = viewingStudent.attendanceHistory;
 
             if (existingRecord) {
                 // To update an item in an array, we remove the old and add the new one.

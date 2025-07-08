@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useRef } from 'react';
 import Card from './Card';
 import { Group, Student } from '../types';
@@ -153,7 +151,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
   }, []);
 
   const handleSaveStudent = async () => {
-    if (!currentStudentFirstName.trim() || !currentStudentLastName.trim() || !viewingStudentsOf) return;
+    if (!currentStudentFirstName.trim() || !viewingStudentsOf) return;
     
     const fullName = `${currentStudentFirstName.trim()} ${currentStudentLastName.trim()}`;
     const modificationDate = new Date().toLocaleString('es-ES');
@@ -244,7 +242,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
         });
         
         let jsonStr = response.text.trim();
-        const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
+        const fenceRegex = /^\\\`\\\`\\\`(\w*)?\s*\n?(.*?)\n?\s*\\\`\\\`\\\`$/s;
         const match = jsonStr.match(fenceRegex);
         if (match && match[2]) {
             jsonStr = match[2].trim();
