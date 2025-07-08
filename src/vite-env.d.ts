@@ -19,8 +19,9 @@ declare const __BUILD_TIMESTAMP__: string;
 
 // Declare process to be available for the Gemini API Key, as per usage guidelines.
 // Vite is expected to replace this at build time.
-declare var process: {
-  env: {
+// We augment the global NodeJS namespace to avoid redeclaration errors.
+declare namespace NodeJS {
+  interface ProcessEnv {
     API_KEY: string;
   }
-};
+}

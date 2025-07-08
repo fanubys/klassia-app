@@ -236,7 +236,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
             Return ONLY a valid JSON object.
         `;
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash-preview-04-17",
+            model: "gemini-2.5-flash",
             contents: prompt,
             config: { responseMimeType: "application/json" },
         });
@@ -259,7 +259,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
 
       } catch (e) {
           console.error("AI analysis failed:", e);
-          showFeedback("La IA no pudo analizar el archivo. Por favor, configura la importación manually.", 'warning');
+          showFeedback("La IA no pudo analizar el archivo. Por favor, configura la importación manualmente.", 'warning');
           setAiSuggestions(null);
       } finally {
           setIsAiLoading(false);
