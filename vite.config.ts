@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
       // como process.env.API_KEY para que el SDK de Gemini pueda acceder a ella.
       'process.env.API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY),
       
-      '__APP_VERSION__': JSON.stringify(env.npm_package_version),
+      '__APP_VERSION__': JSON.stringify(process.env.npm_package_version),
       '__BUILD_TIMESTAMP__': JSON.stringify(new Date().toLocaleString('es-ES')),
     },
     plugins: [react()],
