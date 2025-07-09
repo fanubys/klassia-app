@@ -5,7 +5,7 @@ import { Plus, Search, Edit, Trash2, FileUp, ArrowLeft, Wand2, Loader } from 'lu
 import * as XLSX from 'xlsx';
 import { GoogleGenAI } from '@google/genai';
 import { db } from '../firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, query, where, getDocs, increment } from 'firebase/firestore';
 
 
 interface GroupsProps {
@@ -110,6 +110,9 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
 
             await batch.commit();
             showFeedback(`El grupo "${groupToDelete.name}" y sus estudiantes han sido eliminados.`, 'success');
+            if (viewingStudentsOf?.id === groupId) {
+              setViewingStudentsOf(null);
+            }
 
         } catch (e) {
             console.error("Error deleting group: ", e);
@@ -169,8 +172,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
                 lastName: currentStudentLastName.trim(),
                 attendanceHistory: [],
             });
-            const newCount = (viewingStudentsOf.studentCount || 0) + 1;
-            await updateDoc(groupRef, { studentCount: newCount, lastModified: modificationDate });
+            await updateDoc(groupRef, { studentCount: increment(1), lastModified: modificationDate });
             showFeedback(`Estudiante "${fullName}" añadido a ${viewingStudentsOf.name}.`, 'success');
         }
     } catch(e) {
@@ -187,8 +189,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
         try {
             await deleteDoc(doc(db, 'students', student.id));
             const groupRef = doc(db, 'groups', viewingStudentsOf.id);
-            const newCount = Math.max(0, (viewingStudentsOf.studentCount || 1) - 1);
-            await updateDoc(groupRef, { studentCount: newCount, lastModified: new Date().toLocaleString('es-ES') });
+            await updateDoc(groupRef, { studentCount: increment(-1), lastModified: new Date().toLocaleString('es-ES') });
             showFeedback(`Estudiante eliminado.`, 'success');
         } catch(e) {
             console.error("Error deleting student: ", e);
@@ -426,7 +427,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
                     {group.name}
                   </button>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{group.studentCount}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{group.studentCount || 0}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{group.lastModified || '-'}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end space-x-4">
@@ -442,59 +443,62 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
     </Card>
   );
 
-  const renderStudentList = () => (
-    <Card 
-        title={`Estudiantes en "${viewingStudentsOf?.name}"`}
-        actions={
-            <button onClick={closeStudentView} className="inline-flex items-center px-4 py-2 border border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none">
-                <ArrowLeft size={16} className="mr-2"/> Volver a Grupos
-            </button>
-        }
-    >
-        <div className="relative pb-16">
-            <div className="mb-4">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                    <input type="text" placeholder="Buscar estudiante..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border bg-gray-700 border-gray-600 rounded-md focus:ring-primary focus:border-primary text-white placeholder-gray-400"/>
+  const renderStudentList = () => {
+    const groupName = viewingStudentsOf ? viewingStudentsOf.name : '';
+    return (
+        <Card 
+            title={`Estudiantes en "${groupName}"`}
+            actions={
+                <button onClick={closeStudentView} className="inline-flex items-center px-4 py-2 border border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none">
+                    <ArrowLeft size={16} className="mr-2"/> Volver a Grupos
+                </button>
+            }
+        >
+            <div className="relative pb-16">
+                <div className="mb-4">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <input type="text" placeholder="Buscar estudiante..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border bg-gray-700 border-gray-600 rounded-md focus:ring-primary focus:border-primary text-white placeholder-gray-400"/>
+                    </div>
+                </div>
+                 <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-700">
+                        <thead className="bg-gray-700/50">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Nombre</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Apellido</th>
+                                <th scope="col" className="relative px-6 py-3"><span className="sr-only">Acciones</span></th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-gray-800 divide-y divide-gray-700">
+                            {filteredStudents.map((student) => (
+                                <tr key={student.id} className="hover:bg-gray-700/60">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">{student.firstName}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{student.lastName}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div className="flex items-center justify-end space-x-4">
+                                            <button onClick={() => openStudentModalForEdit(student)} className="text-secondary hover:text-secondary/80" title="Editar estudiante"><Edit size={18} /></button>
+                                            <button onClick={() => handleDeleteStudent(student)} className="text-danger hover:text-danger/80" title="Eliminar estudiante"><Trash2 size={18} /></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                 </div>
+                 <div className="absolute bottom-0 right-0">
+                    <button
+                        onClick={openStudentModalForAdd}
+                        className="bg-primary hover:bg-primary-dark text-white rounded-full p-4 shadow-lg transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-primary"
+                        title="Añadir Estudiante"
+                    >
+                        <Plus size={24} />
+                    </button>
                 </div>
             </div>
-             <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-700">
-                    <thead className="bg-gray-700/50">
-                        <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Nombre</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Apellido</th>
-                            <th scope="col" className="relative px-6 py-3"><span className="sr-only">Acciones</span></th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-gray-800 divide-y divide-gray-700">
-                        {filteredStudents.map((student) => (
-                            <tr key={student.id} className="hover:bg-gray-700/60">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">{student.firstName}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{student.lastName}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div className="flex items-center justify-end space-x-4">
-                                        <button onClick={() => openStudentModalForEdit(student)} className="text-secondary hover:text-secondary/80" title="Editar estudiante"><Edit size={18} /></button>
-                                        <button onClick={() => handleDeleteStudent(student)} className="text-danger hover:text-danger/80" title="Eliminar estudiante"><Trash2 size={18} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-             </div>
-             <div className="absolute bottom-0 right-0">
-                <button
-                    onClick={openStudentModalForAdd}
-                    className="bg-primary hover:bg-primary-dark text-white rounded-full p-4 shadow-lg transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-primary"
-                    title="Añadir Estudiante"
-                >
-                    <Plus size={24} />
-                </button>
-            </div>
-        </div>
-    </Card>
-  );
+        </Card>
+      );
+  }
 
   const renderImportConfirmModal = () => {
     if (!isImportConfirmOpen || !importPreview) return null;

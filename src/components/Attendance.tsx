@@ -41,7 +41,7 @@ const StatusBadge: React.FC<{ status?: AttendanceStatus }> = ({ status }) => {
 };
 
 const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
-    const [selectedGroupId, setSelectedGroupId] = useState<string>(groups[0]?.id || '');
+    const [selectedGroupId, setSelectedGroupId] = useState<string>('');
     const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
     const [dailyAttendance, setDailyAttendance] = useState<Record<string, { status: AttendanceStatus; observations: string }>>({});
     
@@ -59,6 +59,12 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
     };
     
     const getTodayString = () => new Date().toISOString().split('T')[0];
+
+    useEffect(() => {
+        if (!selectedGroupId && groups.length > 0) {
+            setSelectedGroupId(groups[0].id);
+        }
+    }, [groups, selectedGroupId]);
 
     // Effect to handle group changes (e.g., deletion) and load daily attendance
     useEffect(() => {
@@ -88,7 +94,8 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
     
     const handleSelectStudent = (student: Student) => {
         setViewingStudent(student);
-        const attendance = dailyAttendance[student.id];
+        const todayStr = getTodayString();
+        const attendance = student.attendanceHistory.find(r => r.date === todayStr);
         setCurrentStatus(attendance?.status || null);
         setCurrentObservations(attendance?.observations || '');
         setPhotoUrl(student.photoUrl);
@@ -305,7 +312,7 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
                                           <p className="font-medium text-gray-100">{student.firstName} {student.lastName}</p>
                                       </div>
                                       <div className="flex items-center">
-                                          <StatusBadge status={dailyAttendance[student.id]?.status} />
+                                          <StatusBadge status={student.attendanceHistory.find(r => r.date === todayStr)?.status} />
                                           <ChevronRight className="w-5 h-5 text-gray-500 ml-3" />
                                       </div>
                                   </button>
