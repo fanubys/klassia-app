@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { collection, onSnapshot, QuerySnapshot, DocumentData, FirestoreError, query, orderBy } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, isFirebaseConfigured, firebaseConfigError } from "../firebase";
 
 export function useFirestoreSync<T = DocumentData>(collectionName: string, orderByField: string) {
   const [data, setData] = useState<T[]>([]);
@@ -9,6 +9,17 @@ export function useFirestoreSync<T = DocumentData>(collectionName: string, order
   const [error, setError] = useState<FirestoreError | null>(null);
 
   useEffect(() => {
+    // If Firebase isn't configured, set an error immediately and stop.
+    if (!isFirebaseConfigured || !db) {
+      setError({
+        name: 'FirebaseConfigError',
+        message: firebaseConfigError || 'Firebase no está configurado.',
+        code: 'invalid-argument' // Using a generic code
+      } as FirestoreError);
+      setLoading(false);
+      return;
+    }
+
     const q = query(collection(db, collectionName), orderBy(orderByField));
 
     const unsubscribe = onSnapshot(

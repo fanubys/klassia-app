@@ -17,8 +17,12 @@ root.render(
 
 // --- Service Worker Registration ---
 if ('serviceWorker' in navigator) {
-  const registerSW = () => {
-    const swUrl = `/service-worker.js`;
+  // We register the service worker after the 'load' event to ensure the page
+  // is fully ready, preventing "invalid state" errors.
+  window.addEventListener('load', () => {
+    // Use an absolute URL for the service worker to be more robust,
+    // especially in sandboxed environments.
+    const swUrl = `${window.location.origin}/service-worker.js`;
     navigator.serviceWorker.register(swUrl).then(registration => {
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
@@ -38,15 +42,8 @@ if ('serviceWorker' in navigator) {
     }).catch(error => {
       console.error('Error during service worker registration:', error);
     });
-  };
+  });
 
-  // Ensure registration happens after the page is fully loaded to avoid race conditions.
-  // This also handles the case where the script is loaded after the 'load' event has already fired.
-  if (document.readyState === 'complete') {
-    registerSW();
-  } else {
-    window.addEventListener('load', registerSW);
-  }
 
   // This listener will reload the page when the new service worker has taken control.
   let refreshing: boolean;
