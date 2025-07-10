@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Tab } from '../types';
-import { Menu, X, Loader, CheckCircle, XCircle } from 'lucide-react';
+import { Menu, X, Loader, CheckCircle, XCircle, WifiOff } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
   syncStatus: string;
+  isOffline?: boolean;
 }
 
 const SyncIndicator: React.FC<{ status: string }> = ({ status }) => {
@@ -34,8 +35,15 @@ const SyncIndicator: React.FC<{ status: string }> = ({ status }) => {
     return <div style={{width: 16, height: 16}}></div>;
 };
 
+const OfflineIndicator: React.FC = () => (
+    <div className="flex items-center text-yellow-400" title="Mostrando datos locales. No hay conexión con el servidor.">
+        <WifiOff size={16} className="mr-1" />
+        <span className="text-sm font-medium">Offline</span>
+    </div>
+);
 
-const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, syncStatus }) => {
+
+const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, syncStatus, isOffline }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const tabs = Object.values(Tab);
 
@@ -65,22 +73,25 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, syncStatus }) 
           <div className="flex items-center">
             <img src="/icon-192.png" alt="Klassia-app Logo" className="h-8 w-8 mr-2" />
             <span className="font-bold text-xl tracking-tight">Klassia-app</span>
-            <div className="ml-3 w-4 h-4 flex items-center justify-center">
-                <SyncIndicator status={syncStatus} />
-            </div>
           </div>
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-2">
               {tabs.map((tab) => <NavTab key={tab} tab={tab} />)}
             </div>
           </div>
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-white/20 focus:outline-none"
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+          <div className="flex items-center gap-4">
+              {isOffline && <OfflineIndicator />}
+              <div className="w-4 h-4 flex items-center justify-center">
+                  <SyncIndicator status={syncStatus} />
+              </div>
+              <div className="md:hidden">
+                  <button
+                      onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                      className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-white/20 focus:outline-none"
+                  >
+                      {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                  </button>
+              </div>
           </div>
         </div>
       </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -32,22 +31,24 @@ const UpdatePrompt: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => (
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Inicio);
-  // The app's data now comes exclusively from Firestore in real-time.
-  const { data: groups, loading: groupsLoading, error: groupsError } = useFirestoreSync<Group>('groups', 'name');
-  const { data: students, loading: studentsLoading, error: studentsError } = useFirestoreSync<Student>('students', 'lastName');
+  // Data is now exclusively fetched from Firestore in real-time.
+  const { data: groups, loading: groupsLoading, error: groupsError, fromCache: groupsFromCache } = useFirestoreSync<Group>('groups', 'name');
+  const { data: students, loading: studentsLoading, error: studentsError, fromCache: studentsFromCache } = useFirestoreSync<Student>('students', 'lastName');
+  
   const [syncStatus, setSyncStatus] = useState('syncing');
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [writeError, setWriteError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (groupsLoading || studentsLoading) {
         setSyncStatus('syncing');
-    } else if (groupsError || studentsError) {
+    } else if (groupsError || studentsError || writeError) {
         setSyncStatus('error');
     } else {
         setSyncStatus('synced');
     }
-  }, [groupsLoading, studentsLoading, groupsError, studentsError]);
+  }, [groupsLoading, studentsLoading, groupsError, studentsError, writeError]);
 
   
   // Service Worker update listener
@@ -72,6 +73,9 @@ const App: React.FC = () => {
     }
   };
 
+  const handleClearError = () => {
+    setWriteError(null);
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -79,10 +83,11 @@ const App: React.FC = () => {
         return <Dashboard setActiveTab={setActiveTab} totalStudents={students.length} totalGroups={groups.length} students={students} />;
       case Tab.Grupos:
         // No longer passing setters, components will write to Firestore directly.
-        return <Groups groups={groups} students={students} />;
+        // Pass setWriteError to capture write failures.
+        return <Groups groups={groups} students={students} setWriteError={setWriteError} />;
       case Tab.Asistencia:
-        // No longer passing setters.
-        return <Attendance groups={groups} students={students} />;
+        // Pass setWriteError to capture write failures.
+        return <Attendance groups={groups} students={students} setWriteError={setWriteError} />;
       case Tab.Reportes:
         const key = `reports-${groups.length}-${students.length}`;
         return <Reports key={key} groups={groups} students={students} />;
@@ -94,14 +99,16 @@ const App: React.FC = () => {
         return <Dashboard setActiveTab={setActiveTab} totalStudents={students.length} totalGroups={groups.length} students={students} />;
     }
   };
-
-  const combinedError = groupsError || studentsError;
+  
+  // Prioritize write errors for display as they are more critical user actions.
+  const combinedError = writeError || groupsError || studentsError;
+  const isOffline = groupsFromCache || studentsFromCache;
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} syncStatus={syncStatus} />
+      <Header activeTab={activeTab} setActiveTab={setActiveTab} syncStatus={syncStatus} isOffline={isOffline} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <SyncErrorBanner error={combinedError} />
+        <SyncErrorBanner error={combinedError} onClose={handleClearError} />
         {renderContent()}
       </main>
       {showUpdatePrompt && <UpdatePrompt onUpdate={updateServiceWorker} />}

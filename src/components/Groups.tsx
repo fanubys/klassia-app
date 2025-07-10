@@ -5,15 +5,16 @@ import { Plus, Search, Edit, Trash2, FileUp, ArrowLeft, Wand2, Loader } from 'lu
 import * as XLSX from 'xlsx';
 import { GoogleGenAI } from '@google/genai';
 import { db } from '../firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, query, where, getDocs, increment } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, query, where, getDocs, increment, FirestoreError } from 'firebase/firestore';
 
 
 interface GroupsProps {
     groups: Group[];
     students: Student[];
+    setWriteError: (error: Error | null) => void;
 }
 
-const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
+const Groups: React.FC<GroupsProps> = ({ groups, students, setWriteError }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [currentGroupName, setCurrentGroupName] = useState('');
@@ -67,6 +68,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
     if (!currentGroupName.trim()) return;
     const trimmedName = currentGroupName.trim();
     const modificationDate = new Date().toLocaleString('es-ES');
+    setWriteError(null);
 
     try {
         if (editingGroup) {
@@ -83,7 +85,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
         }
     } catch (e) {
         console.error("Error saving group: ", e);
-        showFeedback("Error al guardar el grupo.", 'error');
+        setWriteError(e as FirestoreError);
     }
     
     closeGroupModal();
@@ -92,16 +94,15 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
   const handleDeleteGroup = async (groupId: string) => {
     const groupToDelete = groups.find(g => g.id === groupId);
     if (!groupToDelete) return;
+    setWriteError(null);
 
     if (window.confirm(`¿Estás seguro de que quieres eliminar el grupo "${groupToDelete.name}"? Esta acción eliminará también a todos sus estudiantes.`)) {
         try {
             const batch = writeBatch(db);
             
-            // Delete the group
             const groupRef = doc(db, 'groups', groupId);
             batch.delete(groupRef);
 
-            // Find and delete associated students
             const studentsQuery = query(collection(db, 'students'), where('groupId', '==', groupId));
             const studentDocs = await getDocs(studentsQuery);
             studentDocs.forEach(studentDoc => {
@@ -116,7 +117,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
 
         } catch (e) {
             console.error("Error deleting group: ", e);
-            showFeedback("Error al eliminar el grupo.", "error");
+            setWriteError(e as FirestoreError);
         }
     }
   };
@@ -155,6 +156,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
 
   const handleSaveStudent = async () => {
     if (!currentStudentFirstName.trim() || !viewingStudentsOf) return;
+    setWriteError(null);
     
     const fullName = `${currentStudentFirstName.trim()} ${currentStudentLastName.trim()}`;
     const modificationDate = new Date().toLocaleString('es-ES');
@@ -177,7 +179,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
         }
     } catch(e) {
         console.error("Error saving student: ", e);
-        showFeedback("Error al guardar el estudiante.", "error");
+        setWriteError(e as FirestoreError);
     }
     
     closeStudentModal();
@@ -185,6 +187,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
 
   const handleDeleteStudent = async (student: Student) => {
     if (!viewingStudentsOf) return;
+    setWriteError(null);
     if (window.confirm(`¿Estás seguro de que quieres eliminar a ${student.firstName} ${student.lastName}?`)) {
         try {
             await deleteDoc(doc(db, 'students', student.id));
@@ -193,7 +196,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
             showFeedback(`Estudiante eliminado.`, 'success');
         } catch(e) {
             console.error("Error deleting student: ", e);
-            showFeedback("Error al eliminar el estudiante.", "error");
+            setWriteError(e as FirestoreError);
         }
     }
   };
@@ -216,7 +219,8 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
 
       setImportPreview({ headers, data: rows, fileName });
       setIsImportConfirmOpen(true);
-      setImportSettings({ groupName: groupNameFromFilename, firstNameCol: '0', lastNameCol: '-1', headerRowIndex: -1 }); // Reset
+      setImportSettings({ groupName: groupNameFromFilename, firstNameCol: '0', lastNameCol: '-1', headerRowIndex: -1 });
+      setWriteError(null);
       
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -309,6 +313,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
           showFeedback('Falta información para la importación.', 'error');
           return;
       }
+      setWriteError(null);
       
       const { groupName, firstNameCol, lastNameCol, headerRowIndex } = importSettings;
       
@@ -328,14 +333,14 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
           
           let firstName = '', lastName = '';
 
-          if (lnCol === -1) { // Single full name column
+          if (lnCol === -1) {
               const fullName = row[fnCol];
               if (fullName && typeof fullName === 'string' && fullName.trim()) {
                   const nameParts = fullName.trim().split(/\s+/);
                   firstName = nameParts.shift() || '';
                   lastName = nameParts.join(' ') || '';
               }
-          } else { // Separate first and last name columns
+          } else {
               firstName = row[fnCol] ? String(row[fnCol]).trim() : '';
               lastName = row[lnCol] ? String(row[lnCol]).trim() : '';
           }
@@ -344,7 +349,7 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
               newStudentsData.push({
                   firstName,
                   lastName,
-                  groupId: '', // Will be set after group is created
+                  groupId: '',
                   attendanceHistory: [],
               });
           }
@@ -358,7 +363,6 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
       try {
         const batch = writeBatch(db);
 
-        // 1. Create the new group
         const newGroupRef = doc(collection(db, 'groups'));
         batch.set(newGroupRef, {
             name: groupName.trim(),
@@ -366,23 +370,20 @@ const Groups: React.FC<GroupsProps> = ({ groups, students }) => {
             lastModified: new Date().toLocaleString('es-ES'),
         });
         
-        // 2. Create all student documents
         newStudentsData.forEach(studentData => {
             const studentRef = doc(collection(db, 'students'));
             batch.set(studentRef, { ...studentData, groupId: newGroupRef.id });
         });
         
-        // 3. Commit the batch
         await batch.commit();
 
         showFeedback(`Grupo "${groupName.trim()}" con ${newStudentsData.length} estudiantes importado correctamente.`, 'success');
 
       } catch (e) {
         console.error("Error committing import batch: ", e);
-        showFeedback("Ocurrió un error masivo al importar. Inténtelo de nuevo.", 'error');
+        setWriteError(e as FirestoreError);
       }
       
-      // Close modal
       setIsImportConfirmOpen(false);
       setImportPreview(null);
       setAiSuggestions(null);

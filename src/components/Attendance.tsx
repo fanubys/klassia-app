@@ -3,12 +3,13 @@ import Card from './Card';
 import { Group, Student, AttendanceStatus } from '../types';
 import { Camera, Check, Clock, X, Save, ZoomIn, FileUp, ArrowLeft, ChevronRight, Users } from 'lucide-react';
 import { db } from '../firebase';
-import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, FirestoreError } from 'firebase/firestore';
 
 
 interface AttendanceProps {
     groups: Group[];
     students: Student[];
+    setWriteError: (error: Error | null) => void;
 }
 
 const ImageZoomModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ imageUrl, onClose }) => (
@@ -40,11 +41,10 @@ const StatusBadge: React.FC<{ status?: AttendanceStatus }> = ({ status }) => {
     }
 };
 
-const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
+const Attendance: React.FC<AttendanceProps> = ({ groups, students, setWriteError }) => {
     const [selectedGroupId, setSelectedGroupId] = useState<string>('');
     const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
     
-    // State for individual student view
     const [currentStatus, setCurrentStatus] = useState<AttendanceStatus | null>(null);
     const [currentObservations, setCurrentObservations] = useState('');
     const [photoUrl, setPhotoUrl] = useState<string | undefined>('');
@@ -65,7 +65,6 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
         }
     }, [groups, selectedGroupId]);
 
-    // Effect to handle group changes (e.g., deletion)
     useEffect(() => {
         const groupExists = groups.some(g => g.id === selectedGroupId);
         if (!groupExists && groups.length > 0) {
@@ -98,13 +97,13 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
             alert('Por favor, selecciona un estado de asistencia.');
             return;
         }
+        setWriteError(null);
 
         const todayStr = getTodayString();
         const studentRef = doc(db, 'students', viewingStudent.id);
         const groupRef = doc(db, 'groups', viewingStudent.groupId);
         
         try {
-            // Find if there's an existing record for today
             const existingRecord = viewingStudent.attendanceHistory.find(r => r.date === todayStr);
             const newRecord = {
                 date: todayStr,
@@ -113,7 +112,6 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
             };
 
             if (existingRecord) {
-                // To update an item in an array, we remove the old and add the new one.
                 await updateDoc(studentRef, {
                     attendanceHistory: arrayRemove(existingRecord)
                 });
@@ -123,7 +121,6 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
                 attendanceHistory: arrayUnion(newRecord)
             });
             
-            // Update the group's last modified timestamp
             await updateDoc(groupRef, { lastModified: new Date().toLocaleString('es-ES') });
             
             showFeedback('Asistencia guardada correctamente.', 'success');
@@ -131,7 +128,7 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
 
         } catch (e) {
             console.error("Error saving attendance: ", e);
-            showFeedback('Error al guardar la asistencia.', 'error');
+            setWriteError(e as FirestoreError);
         }
     };
 
@@ -144,8 +141,8 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
             reader.onload = async (e) => {
                 if (e.target?.result) {
                     const newPhotoUrl = e.target.result as string;
-                    // Update the temporary URL for the detail view's image tag
                     setPhotoUrl(newPhotoUrl);
+                    setWriteError(null);
                     
                     try {
                         const studentRef = doc(db, 'students', viewingStudent.id);
@@ -153,8 +150,8 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
                         showFeedback("Foto actualizada.", 'success');
                     } catch(err) {
                         console.error("Error uploading photo:", err);
-                        showFeedback("Error al subir la foto.", 'error');
-                        setPhotoUrl(viewingStudent.photoUrl); // Revert on error
+                        setWriteError(err as FirestoreError);
+                        setPhotoUrl(viewingStudent.photoUrl); 
                     }
                 }
             };

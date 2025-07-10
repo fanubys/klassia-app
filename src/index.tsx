@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -16,10 +15,10 @@ root.render(
 );
 
 // --- Service Worker Registration ---
-// The registration is wrapped in a 'load' event listener to prevent "invalid state" errors.
-// This ensures the page is fully loaded before attempting to register the service worker.
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
+// The registration logic is wrapped in the 'load' event to ensure the page is fully loaded,
+// preventing the "InvalidStateError".
+window.addEventListener('load', () => {
+  if ('serviceWorker' in navigator) {
     // Construct an absolute URL for the service worker to avoid cross-origin errors in sandboxed environments.
     const swUrl = `${window.location.origin}/service-worker.js`;
     navigator.serviceWorker.register(swUrl).then(registration => {
@@ -49,5 +48,5 @@ if ('serviceWorker' in navigator) {
       window.location.reload();
       refreshing = true;
     });
-  });
-}
+  }
+});
