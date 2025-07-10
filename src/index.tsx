@@ -1,3 +1,4 @@
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -15,12 +16,9 @@ root.render(
 );
 
 // --- Service Worker Registration ---
-// The registration logic is wrapped in the 'load' event to ensure the page is fully loaded,
-// preventing the "InvalidStateError".
-window.addEventListener('load', () => {
-  if ('serviceWorker' in navigator) {
-    // Construct an absolute URL for the service worker to avoid cross-origin errors in sandboxed environments.
-    const swUrl = `${window.location.origin}/service-worker.js`;
+if ('serviceWorker' in navigator) {
+  const registerSW = () => {
+    const swUrl = `/service-worker.js`;
     navigator.serviceWorker.register(swUrl).then(registration => {
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
@@ -40,13 +38,21 @@ window.addEventListener('load', () => {
     }).catch(error => {
       console.error('Error during service worker registration:', error);
     });
+  };
 
-    // This listener will reload the page when the new service worker has taken control.
-    let refreshing: boolean;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (refreshing) return;
-      window.location.reload();
-      refreshing = true;
-    });
+  // Ensure registration happens after the page is fully loaded to avoid race conditions.
+  // This also handles the case where the script is loaded after the 'load' event has already fired.
+  if (document.readyState === 'complete') {
+    registerSW();
+  } else {
+    window.addEventListener('load', registerSW);
   }
-});
+
+  // This listener will reload the page when the new service worker has taken control.
+  let refreshing: boolean;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    window.location.reload();
+    refreshing = true;
+  });
+}

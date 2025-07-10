@@ -26,7 +26,7 @@ const Sugerencias: React.FC = () => {
             
             // We don't need the response for this mock, just the successful call
             await ai.models.generateContent({
-                model: 'gemini-2.5-flash-preview-04-17',
+                model: 'gemini-2.5-flash',
                 contents: prompt,
             });
 

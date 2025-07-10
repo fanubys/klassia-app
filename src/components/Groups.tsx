@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import Card from './Card';
 import { Group, Student } from '../types';
@@ -246,11 +247,12 @@ const Groups: React.FC<GroupsProps> = ({ groups, students, setWriteError }) => {
             config: { responseMimeType: "application/json" },
         });
         
+        // Clean up potential markdown code fences
         let jsonStr = response.text.trim();
-        const fenceRegex = /^\\\`\\\`\\\`(\w*)?\s*\n?(.*?)\n?\s*\\\`\\\`\\\`$/s;
+        const fenceRegex = /^\s*```json\s*\n?([\s\S]*?)\n?\s*```\s*$/;
         const match = jsonStr.match(fenceRegex);
-        if (match && match[2]) {
-            jsonStr = match[2].trim();
+        if (match) {
+            jsonStr = match[1];
         }
         
         const suggestions = JSON.parse(jsonStr);

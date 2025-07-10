@@ -14,7 +14,10 @@ const SyncErrorBanner: React.FC<SyncErrorBannerProps> = ({ error, onClose }) => 
       friendlyMessage = 'El acceso a la base de datos fue denegado. Es muy probable que las reglas de seguridad de Cloud Firestore no estén configuradas para permitir lecturas o escrituras.';
   } else if (error.message.includes('offline')) {
       friendlyMessage = 'No se puede realizar la operación. Parece que estás desconectado.';
+  } else if (error.message.includes('400')) {
+      friendlyMessage = 'La solicitud al servidor fue incorrecta. Esto puede deberse a que la API de Cloud Firestore no está habilitada en tu proyecto de Google Cloud.'
   }
+
 
   return (
     <div className="bg-danger/10 border-l-4 border-danger text-white p-4 mb-6 rounded-r-lg shadow-lg animate-fade-in-up relative" role="alert">
@@ -26,7 +29,7 @@ const SyncErrorBanner: React.FC<SyncErrorBannerProps> = ({ error, onClose }) => 
           <p className="font-bold text-danger-light">Error de Sincronización con la Nube</p>
           <p className="text-sm text-gray-300 mt-1">{friendlyMessage}</p>
           <p className="text-xs mt-2 text-gray-400">
-            <b>Solución Sugerida:</b> Ve a tu proyecto en Firebase, navega a Cloud Firestore &rarr; Reglas, y asegúrate de que permitan el acceso. Para desarrollo, puedes usar: 
+            <b>Solución Sugerida:</b> Verifica que la API de Firestore está habilitada en Google Cloud y que las Reglas de Seguridad de tu base de datos en Firebase (pestaña Reglas) permiten el acceso. Para desarrollo, puedes usar: 
             <code className="text-xs bg-gray-900/50 p-1 rounded font-mono">allow read, write: if true;</code>
           </p>
         </div>

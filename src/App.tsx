@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -32,6 +33,7 @@ const UpdatePrompt: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => (
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Inicio);
   // Data is now exclusively fetched from Firestore in real-time.
+  // The local storage and mock data have been completely removed.
   const { data: groups, loading: groupsLoading, error: groupsError, fromCache: groupsFromCache } = useFirestoreSync<Group>('groups', 'name');
   const { data: students, loading: studentsLoading, error: studentsError, fromCache: studentsFromCache } = useFirestoreSync<Student>('students', 'lastName');
   
@@ -82,7 +84,6 @@ const App: React.FC = () => {
       case Tab.Inicio:
         return <Dashboard setActiveTab={setActiveTab} totalStudents={students.length} totalGroups={groups.length} students={students} />;
       case Tab.Grupos:
-        // No longer passing setters, components will write to Firestore directly.
         // Pass setWriteError to capture write failures.
         return <Groups groups={groups} students={students} setWriteError={setWriteError} />;
       case Tab.Asistencia:

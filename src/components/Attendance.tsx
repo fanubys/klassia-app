@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import Card from './Card';
 import { Group, Student, AttendanceStatus } from '../types';
@@ -112,6 +113,7 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setWriteError
             };
 
             if (existingRecord) {
+                // Atomically remove the old record and add the new one
                 await updateDoc(studentRef, {
                     attendanceHistory: arrayRemove(existingRecord)
                 });
@@ -151,6 +153,7 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students, setWriteError
                     } catch(err) {
                         console.error("Error uploading photo:", err);
                         setWriteError(err as FirestoreError);
+                        // Revert optimistic UI update on error
                         setPhotoUrl(viewingStudent.photoUrl); 
                     }
                 }
