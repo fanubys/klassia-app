@@ -1,4 +1,4 @@
-const CACHE_VERSION = 8;
+const CACHE_VERSION = 9;
 const STATIC_CACHE_NAME = `klassia-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE_NAME = `klassia-dynamic-v${CACHE_VERSION}`;
 

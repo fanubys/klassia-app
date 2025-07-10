@@ -32,6 +32,7 @@ const UpdatePrompt: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => (
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Inicio);
+  // The app's data now comes exclusively from Firestore in real-time.
   const { data: groups, loading: groupsLoading, error: groupsError } = useFirestoreSync<Group>('groups', 'name');
   const { data: students, loading: studentsLoading, error: studentsError } = useFirestoreSync<Student>('students', 'lastName');
   const [syncStatus, setSyncStatus] = useState('syncing');
@@ -51,7 +52,6 @@ const App: React.FC = () => {
   
   // Service Worker update listener
   useEffect(() => {
-    // This function handles the 'swUpdate' event dispatched from the registration script in index.tsx
     const handleUpdate = (event: Event) => {
       const customEvent = event as CustomEvent<ServiceWorker>;
       setWaitingWorker(customEvent.detail);
@@ -60,11 +60,10 @@ const App: React.FC = () => {
 
     window.addEventListener('swUpdate', handleUpdate);
 
-    // Cleanup the event listener on component unmount
     return () => {
       window.removeEventListener('swUpdate', handleUpdate);
     };
-  }, []); // Empty dependency array ensures this effect runs only once
+  }, []);
 
   const updateServiceWorker = () => {
     if (waitingWorker) {
@@ -79,11 +78,12 @@ const App: React.FC = () => {
       case Tab.Inicio:
         return <Dashboard setActiveTab={setActiveTab} totalStudents={students.length} totalGroups={groups.length} students={students} />;
       case Tab.Grupos:
+        // No longer passing setters, components will write to Firestore directly.
         return <Groups groups={groups} students={students} />;
       case Tab.Asistencia:
+        // No longer passing setters.
         return <Attendance groups={groups} students={students} />;
       case Tab.Reportes:
-        // We use a key to ensure the component re-mounts when data changes, preventing stale reports.
         const key = `reports-${groups.length}-${students.length}`;
         return <Reports key={key} groups={groups} students={students} />;
       case Tab.Sugerencias:

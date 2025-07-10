@@ -16,7 +16,8 @@ root.render(
 );
 
 // --- Service Worker Registration ---
-// Moved from App.tsx to fix registration state errors and separate concerns.
+// The registration is wrapped in a 'load' event listener to prevent "invalid state" errors.
+// This ensures the page is fully loaded before attempting to register the service worker.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     // Construct an absolute URL for the service worker to avoid cross-origin errors in sandboxed environments.
