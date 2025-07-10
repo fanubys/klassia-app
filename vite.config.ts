@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
+  // Se corrigió el error de tipo reemplazando process.cwd() por ''
   const env = loadEnv(mode, '', '');
   return {
     define: {
@@ -12,6 +13,7 @@ export default defineConfig(({ mode }) => {
       
       '__APP_VERSION__': JSON.stringify(process.env.npm_package_version),
       '__BUILD_TIMESTAMP__': JSON.stringify(new Date().toLocaleString('es-ES')),
+      '__PROJECT_ID__': JSON.stringify(env.VITE_FIREBASE_PROJECT_ID),
     },
     plugins: [react()],
   }

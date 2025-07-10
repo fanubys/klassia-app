@@ -16,6 +16,7 @@ interface ImportMeta {
 
 declare const __APP_VERSION__: string;
 declare const __BUILD_TIMESTAMP__: string;
+declare const __PROJECT_ID__: string;
 
 // Declare process to be available for the Gemini API Key, as per usage guidelines.
 // Vite is expected to replace this at build time.

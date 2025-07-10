@@ -43,7 +43,6 @@ const StatusBadge: React.FC<{ status?: AttendanceStatus }> = ({ status }) => {
 const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
     const [selectedGroupId, setSelectedGroupId] = useState<string>('');
     const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
-    const [dailyAttendance, setDailyAttendance] = useState<Record<string, { status: AttendanceStatus; observations: string }>>({});
     
     // State for individual student view
     const [currentStatus, setCurrentStatus] = useState<AttendanceStatus | null>(null);
@@ -66,7 +65,7 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
         }
     }, [groups, selectedGroupId]);
 
-    // Effect to handle group changes (e.g., deletion) and load daily attendance
+    // Effect to handle group changes (e.g., deletion)
     useEffect(() => {
         const groupExists = groups.some(g => g.id === selectedGroupId);
         if (!groupExists && groups.length > 0) {
@@ -74,21 +73,7 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
         } else if (groups.length === 0) {
             setSelectedGroupId('');
         }
-
-        // Load today's attendance for the selected group
-        const todayStr = getTodayString();
-        const todaysRecords: Record<string, { status: AttendanceStatus; observations: string }> = {};
-        students
-            .filter(s => s.groupId === selectedGroupId)
-            .forEach(s => {
-                const record = s.attendanceHistory.find(r => r.date === todayStr);
-                if (record) {
-                    todaysRecords[s.id] = { status: record.status, observations: record.observations || '' };
-                }
-            });
-        setDailyAttendance(todaysRecords);
-
-    }, [groups, students, selectedGroupId]);
+    }, [groups, selectedGroupId]);
 
     const studentsInSelectedGroup = students.filter(s => s.groupId === selectedGroupId);
     
@@ -140,15 +125,6 @@ const Attendance: React.FC<AttendanceProps> = ({ groups, students }) => {
             
             // Update the group's last modified timestamp
             await updateDoc(groupRef, { lastModified: new Date().toLocaleString('es-ES') });
-            
-            // Update the local daily state for immediate UI feedback
-            setDailyAttendance(prev => ({
-                ...prev,
-                [viewingStudent.id]: {
-                    status: currentStatus,
-                    observations: currentObservations
-                }
-            }));
             
             showFeedback('Asistencia guardada correctamente.', 'success');
             handleGoBackToList();

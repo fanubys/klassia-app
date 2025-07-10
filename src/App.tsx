@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -9,6 +10,7 @@ import Settings from './components/Settings';
 import { Tab, Group, Student } from './types';
 import { RefreshCw } from 'lucide-react';
 import { useFirestoreSync } from './hooks/useFirestoreSync';
+import SyncErrorBanner from './components/SyncErrorBanner';
 
 const UpdatePrompt: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => (
     <div className="fixed bottom-6 right-6 z-[100] bg-gray-700 text-white p-4 rounded-lg shadow-xl flex items-center space-x-4 animate-fade-in-up border border-gray-600">
@@ -47,49 +49,22 @@ const App: React.FC = () => {
   }, [groupsLoading, studentsLoading, groupsError, studentsError]);
 
   
-  // Service Worker update logic
+  // Service Worker update listener
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      const registerSW = () => {
-        // Construct an absolute URL for the service worker to avoid cross-origin errors in sandboxed environments.
-        const swUrl = `${window.location.origin}/service-worker.js`;
-        navigator.serviceWorker.register(swUrl).then(registration => {
-            registration.onupdatefound = () => {
-                const installingWorker = registration.installing;
-                if (installingWorker) {
-                    installingWorker.onstatechange = () => {
-                        if (installingWorker.state === 'installed') {
-                            if (navigator.serviceWorker.controller) {
-                                // New update available
-                                setWaitingWorker(installingWorker);
-                                setShowUpdatePrompt(true);
-                            }
-                        }
-                    };
-                }
-            };
-        }).catch(error => {
-            console.error('Error during service worker registration:', error);
-        });
+    // This function handles the 'swUpdate' event dispatched from the registration script in index.tsx
+    const handleUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<ServiceWorker>;
+      setWaitingWorker(customEvent.detail);
+      setShowUpdatePrompt(true);
+    };
 
-        let refreshing: boolean;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (refreshing) return;
-            window.location.reload();
-            refreshing = true;
-        });
-      };
-      
-      // Robust registration: handle cases where the 'load' event has already fired.
-      if (document.readyState === 'complete') {
-        registerSW();
-      } else {
-        window.addEventListener('load', registerSW);
-        // Cleanup listener on component unmount
-        return () => window.removeEventListener('load', registerSW);
-      }
-    }
-  }, []);
+    window.addEventListener('swUpdate', handleUpdate);
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      window.removeEventListener('swUpdate', handleUpdate);
+    };
+  }, []); // Empty dependency array ensures this effect runs only once
 
   const updateServiceWorker = () => {
     if (waitingWorker) {
@@ -120,10 +95,13 @@ const App: React.FC = () => {
     }
   };
 
+  const combinedError = groupsError || studentsError;
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <Header activeTab={activeTab} setActiveTab={setActiveTab} syncStatus={syncStatus} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <SyncErrorBanner error={combinedError} />
         {renderContent()}
       </main>
       {showUpdatePrompt && <UpdatePrompt onUpdate={updateServiceWorker} />}

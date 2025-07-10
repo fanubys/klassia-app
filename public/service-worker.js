@@ -1,4 +1,4 @@
-const CACHE_VERSION = 6;
+const CACHE_VERSION = 8;
 const STATIC_CACHE_NAME = `klassia-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE_NAME = `klassia-dynamic-v${CACHE_VERSION}`;
 
@@ -50,7 +50,11 @@ self.addEventListener('fetch', event => {
             return cacheRes || fetch(event.request).then(fetchRes => {
                 return caches.open(DYNAMIC_CACHE_NAME).then(cache => {
                     // Don't cache API calls or external modules
-                    if (!event.request.url.includes('generativelanguage.googleapis.com') && !event.request.url.includes('esm.sh')) {
+                    if (
+                        !event.request.url.includes('generativelanguage.googleapis.com') &&
+                        !event.request.url.includes('firestore.googleapis.com') &&
+                        !event.request.url.includes('esm.sh')
+                    ) {
                        cache.put(event.request.url, fetchRes.clone());
                     }
                     return fetchRes;

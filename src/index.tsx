@@ -14,3 +14,39 @@ root.render(
     <App />
   </React.StrictMode>
 );
+
+// --- Service Worker Registration ---
+// Moved from App.tsx to fix registration state errors and separate concerns.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // Construct an absolute URL for the service worker to avoid cross-origin errors in sandboxed environments.
+    const swUrl = `${window.location.origin}/service-worker.js`;
+    navigator.serviceWorker.register(swUrl).then(registration => {
+      registration.onupdatefound = () => {
+        const installingWorker = registration.installing;
+        if (installingWorker) {
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                // New update available. Dispatch a custom event to notify the app.
+                window.dispatchEvent(
+                  new CustomEvent('swUpdate', { detail: installingWorker })
+                );
+              }
+            }
+          };
+        }
+      };
+    }).catch(error => {
+      console.error('Error during service worker registration:', error);
+    });
+
+    // This listener will reload the page when the new service worker has taken control.
+    let refreshing: boolean;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      window.location.reload();
+      refreshing = true;
+    });
+  });
+}

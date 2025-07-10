@@ -67,7 +67,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, totalStudents, tota
         <Calendar date={today} students={students} />
       </Card>
       <footer className="text-center text-gray-500 text-xs pt-4">
-        vers: {version}
+        <p>{version}</p>
+        <p>Conectado al proyecto: <span className="font-semibold text-gray-400">{__PROJECT_ID__ || 'Desconocido'}</span></p>
       </footer>
     </div>
   );
